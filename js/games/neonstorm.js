@@ -47,11 +47,15 @@ window.NeonStormGame = ({ onExit }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isMusicEnabled, setIsMusicEnabled] = useState(true);
     
-    // Player Profile State
+    // Menu States
+    const [showHangar, setShowHangar] = useState(false);
+    const [showStory, setShowStory] = useState(false);
+    const [showTips, setShowTips] = useState(false);
+    
+    // Player Profile State (Transient - Awaiting Backend Props)
     const [credits, setCredits] = useState(100000); 
     const [unlockedThemes, setUnlockedThemes] = useState(['NEON']);
     const [activeTheme, setActiveTheme] = useState(THEMES.NEON);
-    const [showHangar, setShowHangar] = useState(false);
 
     // Leaderboard State
     const [leaderboard, setLeaderboard] = useState([]);
@@ -81,7 +85,7 @@ window.NeonStormGame = ({ onExit }) => {
 
     // --- SYNC STATE TO REFS ---
     useEffect(() => { activeThemeRef.current = activeTheme; }, [activeTheme]);
-    useEffect(() => { isHangarOpenRef.current = showHangar; }, [showHangar]);
+    useEffect(() => { isHangarOpenRef.current = showHangar || showStory || showTips; }, [showHangar, showStory, showTips]);
     useEffect(() => { isMusicEnabledRef.current = isMusicEnabled; }, [isMusicEnabled]);
 
     // --- API CALLS ---
@@ -146,7 +150,7 @@ window.NeonStormGame = ({ onExit }) => {
     };
 
     const playSfx = (type) => {
-        if (!audioContextRef.current || audioContextRef.current.state !== 'running') return;
+        if (!audioContextRef.current) return;
         try {
             const ctx = audioContextRef.current;
             const now = ctx.currentTime;
@@ -630,6 +634,7 @@ window.NeonStormGame = ({ onExit }) => {
         s.score = 0; s.powerUpLevel = 0; s.powerUpEndTime = 0; s.bossCooldown = 0;
         
         s.lastEnemySpawn = 0;
+        setBossActive(false);
 
         setGameOver(false);
         setGameStarted(true);
@@ -716,6 +721,37 @@ window.NeonStormGame = ({ onExit }) => {
                 </div>
              )}
 
+             {/* STORY MODAL */}
+             {showStory && (
+                <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex items-center justify-center p-8">
+                    <div className="max-w-2xl w-full bg-black border border-cyan-500 p-8 clip-cyber relative">
+                        <button onClick={() => setShowStory(false)} className="absolute top-4 right-4 text-cyan-500 hover:text-white">[X] CLOSE</button>
+                        <h2 className="text-3xl font-black text-white mb-6 text-center font-orbitron text-cyan-400">Protocol: Tezcatlipoca</h2>
+                        <div className="space-y-4 text-gray-300 font-rajdhani text-lg leading-relaxed">
+                            <p>The Year is 2099. The ancient Aztec gods were not myths, but <span className="text-yellow-400 font-bold">extraterrestrial AIs</span> dormant in the Earth's crust.</p>
+                            <p>Now they have awakened, digitizing the atmosphere into a neon-soaked simulation known as '<span className="text-pink-500 font-bold">Mictlan</span>'.</p>
+                            <p>You are a <span className="text-cyan-400 font-bold">Nagual</span>—a spirit hacker—piloting the last analog fighter jet. Your mission: Pierce the digital veil, defeat the God-AIs, and restore reality.</p>
+                        </div>
+                    </div>
+                </div>
+             )}
+
+             {/* TIPS MODAL */}
+             {showTips && (
+                <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex items-center justify-center p-8">
+                    <div className="max-w-2xl w-full bg-black border border-cyan-500 p-8 clip-cyber relative">
+                        <button onClick={() => setShowTips(false)} className="absolute top-4 right-4 text-cyan-500 hover:text-white">[X] CLOSE</button>
+                        <h2 className="text-3xl font-black text-white mb-6 text-center font-orbitron text-yellow-400">Tactical Database</h2>
+                        <ul className="space-y-4 text-gray-300 font-rajdhani text-lg">
+                            <li className="flex gap-4 items-start"><span className="text-cyan-400 font-bold">01 // OVERCLOCK:</span> <span>Hold <span className="text-white bg-white/20 px-1">[SPACE]</span> to unleash a rapid-fire barrage.</span></li>
+                            <li className="flex gap-4 items-start"><span className="text-cyan-400 font-bold">02 // COMBO INTEGRITY:</span> <span>Do not let enemies cross the bottom line; it resets your combo multiplier.</span></li>
+                            <li className="flex gap-4 items-start"><span className="text-cyan-400 font-bold">03 // POWER SURPLUS:</span> <span>Collect Data Drops to upgrade weapon spread.</span></li>
+                            <li className="flex gap-4 items-start"><span className="text-cyan-400 font-bold">04 // SYSTEM SHOCK:</span> <span>Bosses have predictable patterns. Learn them to survive.</span></li>
+                        </ul>
+                    </div>
+                </div>
+             )}
+
              {/* HEADER */}
              <div className={`absolute top-0 left-0 w-full z-20 p-6 flex justify-between items-start pointer-events-none transition-all duration-300 ${isFullscreen ? 'max-w-none px-12' : 'max-w-[800px] left-1/2 -translate-x-1/2'}`}>
                 <div className="pointer-events-auto flex gap-4">
@@ -772,21 +808,6 @@ window.NeonStormGame = ({ onExit }) => {
                         <div className="flex flex-col items-center w-full">
                             <h2 className="text-6xl font-black text-cyan-400 mb-6 italic uppercase font-[Orbitron] tracking-tighter">{gameOver ? 'SIGNAL LOST' : 'INITIATE'}</h2>
                             
-                            {/* NEW: INSTRUCTIONS PANEL */}
-                            <div className="bg-black/60 border border-cyan-500/30 p-4 mb-6 text-left font-mono text-sm text-cyan-200 w-full max-w-2xl clip-cyber">
-                                <h3 className="text-white font-bold mb-2 uppercase border-b border-white/20 pb-1 font-orbitron tracking-widest">Mission Protocols</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <ul className="space-y-1">
-                                        <li><span className="text-yellow-400">[WASD]</span> or <span className="text-yellow-400">[ARROWS]</span> :: PILOT SHIP</li>
-                                        <li><span className="text-yellow-400">[SPACE]</span> :: ENGAGE WEAPONS</li>
-                                    </ul>
-                                    <ul className="space-y-1">
-                                        <li><span className="text-pink-500">WARNING:</span> ENEMIES CROSSING LINE BREAK COMBO</li>
-                                        <li>COLLECT <span className="text-yellow-400">DATA DROPS</span> TO UPGRADE FIREPOWER</li>
-                                    </ul>
-                                </div>
-                            </div>
-
                             <div className="flex flex-col md:flex-row w-full gap-8 mb-8">
                                 <div className="flex-1 bg-black/40 p-6 border border-white/10 relative">
                                     <div className="absolute top-0 left-0 w-2 h-2 bg-cyan-400"></div><div className="absolute bottom-0 right-0 w-2 h-2 bg-pink-500"></div>
@@ -809,6 +830,15 @@ window.NeonStormGame = ({ onExit }) => {
                                         ))}
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="flex gap-4 mb-4">
+                                <button onClick={() => setShowStory(true)} className="flex-1 bg-black/50 border border-cyan-500/30 text-cyan-400 py-3 hover:bg-cyan-900/30 transition-all font-mono text-xs uppercase tracking-widest">
+                                    [ARCHIVES]
+                                </button>
+                                <button onClick={() => setShowTips(true)} className="flex-1 bg-black/50 border border-yellow-500/30 text-yellow-400 py-3 hover:bg-yellow-900/30 transition-all font-mono text-xs uppercase tracking-widest">
+                                    [TACTICS]
+                                </button>
                             </div>
 
                             <div className="flex gap-4">
