@@ -1,0 +1,83 @@
+/* =========================================
+   1. GLOBAL & FONTS
+   ========================================= */
+body { 
+    margin: 0; 
+    background-color: #050505;
+    background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    font-family: 'Rajdhani', sans-serif; 
+}
+
+/* =========================================
+   2. CYBERPUNK UTILITIES
+   ========================================= */
+
+/* Angled Corners (The "Cyber" Shape) */
+.clip-cyber {
+    clip-path: polygon(
+        0 0, 
+        100% 0, 
+        100% 85%, 
+        95% 100%, 
+        0 100%
+    );
+}
+
+.clip-cyber-btn {
+    clip-path: polygon(
+        10px 0, 
+        100% 0, 
+        100% calc(100% - 10px), 
+        calc(100% - 10px) 100%, 
+        0 100%, 
+        0 10px
+    );
+}
+
+/* CRT Scanline Effect */
+.scanlines {
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.2) 50%,
+        rgba(0,0,0,0.2)
+    );
+    background-size: 100% 4px;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0b0b14; }
+::-webkit-scrollbar-thumb { background: #00f3ff; }
+::-webkit-scrollbar-thumb:hover { background: #ff003c; }
+
+/* =========================================
+   3. ANIMATIONS
+   ========================================= */
+@keyframes glitch {
+    0% { text-shadow: 2px 2px #ff003c, -2px -2px #00f3ff; }
+    25% { text-shadow: -2px 2px #ff003c, 2px -2px #00f3ff; }
+    50% { text-shadow: 2px -2px #ff003c, -2px 2px #00f3ff; }
+    75% { text-shadow: -2px -2px #ff003c, 2px 2px #00f3ff; }
+    100% { text-shadow: 2px 2px #ff003c, -2px -2px #00f3ff; }
+}
+
+.animate-glitch:hover {
+    animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+@keyframes pulse-border {
+    0% { border-color: rgba(0, 243, 255, 0.2); box-shadow: 0 0 5px rgba(0,243,255,0.1); }
+    50% { border-color: rgba(0, 243, 255, 0.8); box-shadow: 0 0 20px rgba(0,243,255,0.4); }
+    100% { border-color: rgba(0, 243, 255, 0.2); box-shadow: 0 0 5px rgba(0,243,255,0.1); }
+}
+
+.border-pulse {
+    animation: pulse-border 2s infinite;
+}
