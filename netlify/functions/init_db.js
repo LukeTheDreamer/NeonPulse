@@ -1,6 +1,26 @@
 const { Client } = require('pg');
 
-exports.handler = async () => {
+function json(statusCode, body) {
+    return {
+        statusCode,
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+        body: JSON.stringify(body),
+    };
+}
+
+function getBearerToken(event) {
+    const header = event?.headers?.authorization ?? event?.headers?.Authorization;
+    if (!header) return null;
+    const [scheme, token] = String(header).split(' ');
+    if (scheme?.toLowerCase() !== 'bearer' || !token) return null;
+    return token;
+}
+
+exports.handler = async (event) => {
+    const initToken = process.env.INIT_DB_TOKEN;
+    if (!initToken) return json(404, { error: 'Not found' });
+    if (getBearerToken(event) !== initToken) return json(401, { error: 'Unauthorized' });
+
     const client = new Client({ connectionString: process.env.DATABASE_URL });
     
     try {
@@ -34,17 +54,15 @@ exports.handler = async () => {
         `);
 
         // Backwards-compatible migration from the legacy email/password auth table shape
-        await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth0_sub TEXT;`);
-        await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_auth0_sub_unique ON users(auth0_sub);`);
         try {
             await client.query(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;`);
         } catch (_) {
             // Column may not exist in the newer schema
         }
 
-        return { statusCode: 200, body: "Database initialized for Auth0-backed users." };
+        return json(200, { ok: true, message: "Database initialized for Auth0-backed users." });
     } catch (err) {
-        return { statusCode: 500, body: err.toString() };
+        return json(500, { error: 'Server Error' });
     } finally {
         await client.end();
     }
