@@ -5,11 +5,11 @@ const NeonStormGame = window.NeonStormGame;
 // ==========================================
 // CONFIG & CONSTANTS
 // ==========================================
-// REPLACE WITH YOUR REAL STRIPE PRICE IDs
-const STRIPE_PRICES = {
-    CREDITS: "price_1Qxyz...", 
-    SKIN: "price_1Qabc...",    
-    BADGE: "price_1Qdef..."    
+// Store products are resolved server-side (Netlify Function) to Stripe Price IDs via environment variables.
+const STORE_ITEMS = {
+    CREDITS_5000: "credits_5000",
+    GOLDEN_SKIN: "golden_skin",
+    SUPPORTER_BADGE: "supporter_badge"
 };
 
 const GAMES_DB = [
@@ -59,14 +59,18 @@ const AuthStatusBanner = ({ error }) => {
 const CyberStore = ({ onClose, user }) => {
     const [loadingItem, setLoadingItem] = useState(null);
 
-    const buyItem = async (priceId, itemName) => {
-        if (!user) return alert("LOGIN REQUIRED FOR TRANSACTIONS");
+    const buyItem = async (itemName) => {
+        if (!user?.token) return alert("LOGIN REQUIRED FOR TRANSACTIONS");
         
         setLoadingItem(itemName);
         try {
             const response = await fetch('/.netlify/functions/create_checkout', { 
                 method: 'POST',
-                body: JSON.stringify({ priceId, itemName })
+                headers: {
+                    'content-type': 'application/json',
+                    authorization: `Bearer ${user.token}`
+                },
+                body: JSON.stringify({ itemName })
             });
             const { url } = await response.json();
             if(url) window.location.href = url;
@@ -89,7 +93,7 @@ const CyberStore = ({ onClose, user }) => {
                     <div className="bg-white/5 p-6 border border-white/10 hover:border-cyber-cyan transition-all group">
                         <div className="h-24 bg-cyan-900/30 mb-4 flex items-center justify-center text-4xl">💎</div>
                         <h3 className="text-xl font-bold text-white mb-2">5000 CREDITS</h3>
-                        <button onClick={() => buyItem(STRIPE_PRICES.CREDITS, 'credits_5000')} disabled={!!loadingItem} className="w-full py-3 bg-cyber-cyan text-black font-bold uppercase hover:bg-white clip-cyber-btn">
+                        <button onClick={() => buyItem(STORE_ITEMS.CREDITS_5000)} disabled={!!loadingItem} className="w-full py-3 bg-cyber-cyan text-black font-bold uppercase hover:bg-white clip-cyber-btn">
                             {loadingItem === 'credits_5000' ? '...' : 'BUY $4.99'}
                         </button>
                     </div>
@@ -97,7 +101,7 @@ const CyberStore = ({ onClose, user }) => {
                     <div className="bg-white/5 p-6 border border-white/10 hover:border-cyber-yellow transition-all group">
                         <div className="h-24 bg-yellow-900/30 mb-4 flex items-center justify-center text-4xl">👑</div>
                         <h3 className="text-xl font-bold text-white mb-2">GOLDEN SKIN</h3>
-                        <button onClick={() => buyItem(STRIPE_PRICES.SKIN, 'golden_skin')} disabled={!!loadingItem} className="w-full py-3 bg-cyber-yellow text-black font-bold uppercase hover:bg-white clip-cyber-btn">
+                        <button onClick={() => buyItem(STORE_ITEMS.GOLDEN_SKIN)} disabled={!!loadingItem} className="w-full py-3 bg-cyber-yellow text-black font-bold uppercase hover:bg-white clip-cyber-btn">
                             {loadingItem === 'golden_skin' ? '...' : 'BUY $9.99'}
                         </button>
                     </div>
@@ -105,7 +109,7 @@ const CyberStore = ({ onClose, user }) => {
                     <div className="bg-white/5 p-6 border border-white/10 hover:border-cyber-pink transition-all group">
                         <div className="h-24 bg-pink-900/30 mb-4 flex items-center justify-center text-4xl">🚀</div>
                         <h3 className="text-xl font-bold text-white mb-2">SUPPORTER</h3>
-                        <button onClick={() => buyItem(STRIPE_PRICES.BADGE, 'supporter_badge')} disabled={!!loadingItem} className="w-full py-3 bg-cyber-pink text-black font-bold uppercase hover:bg-white clip-cyber-btn">
+                        <button onClick={() => buyItem(STORE_ITEMS.SUPPORTER_BADGE)} disabled={!!loadingItem} className="w-full py-3 bg-cyber-pink text-black font-bold uppercase hover:bg-white clip-cyber-btn">
                             {loadingItem === 'supporter_badge' ? '...' : 'BUY $2.99'}
                         </button>
                     </div>
@@ -186,7 +190,7 @@ const App = () => {
                     useRefreshTokens: true,
                     authorizationParams: {
                         redirect_uri: window.location.origin,
-                        scope: 'openid profile email',
+                        scope: 'openid profile email offline_access',
                         ...(cfg.audience ? { audience: cfg.audience } : {})
                     }
                 });
@@ -225,7 +229,7 @@ const App = () => {
                 const userData = await userRes.json();
                 if (!userRes.ok) throw new Error(userData?.error || 'Failed to load user');
                 if (cancelled) return;
-                setUser(userData);
+                setUser({ ...userData, token });
             } catch (e) {
                 if (!cancelled) setAuthError(e?.message || 'Auth error');
             }
@@ -263,7 +267,7 @@ const App = () => {
         await auth0Client.loginWithRedirect({
             authorizationParams: {
                 redirect_uri: window.location.origin,
-                scope: 'openid profile email',
+                scope: 'openid profile email offline_access',
                 ...(auth0Config.audience ? { audience: auth0Config.audience } : {}),
                 ...(isSignup ? { screen_hint: 'signup' } : {})
             }
