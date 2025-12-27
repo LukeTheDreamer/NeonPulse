@@ -40,99 +40,14 @@ const GAMES_DB = [
 ];
 
 // ==========================================
-// AUTH COMPONENT (LOGIN / REGISTER)
+// AUTH0 (LOGIN / REGISTER)
 // ==========================================
-const AuthModal = ({ onClose, onLoginSuccess }) => {
-    const [isLogin, setIsLogin] = useState(true);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    
-    const [formData, setFormData] = useState({
-        username: "",
-        email: "",
-        password: ""
-    });
-
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-
-        const endpoint = isLogin ? '/.netlify/functions/auth_login' : '/.netlify/functions/auth_signup';
-
-        try {
-            const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) throw new Error(data.error || "Connection Refused");
-
-            // Save Token & User
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            
-            onLoginSuccess(data.user);
-            onClose();
-
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+const AuthStatusBanner = ({ error }) => {
+    if (!error) return null;
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-            <div className="max-w-md w-full bg-cyber-black border border-cyber-cyan p-8 clip-cyber relative shadow-[0_0_50px_rgba(0,243,255,0.2)]">
-                <button onClick={onClose} className="absolute top-4 right-4 text-cyber-pink font-bold hover:text-white">[X]</button>
-                
-                <h2 className="text-3xl font-orbitron font-black text-white mb-6 text-center">
-                    {isLogin ? 'SYSTEM LOGIN' : 'NEW IDENTITY'}
-                </h2>
-
-                {error && <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 mb-4 text-sm font-mono text-center">{error}</div>}
-
-                <form onSubmit={handleSubmit} className="space-y-4 font-rajdhani">
-                    {!isLogin && (
-                        <input 
-                            name="username" type="text" placeholder="CODENAME" required 
-                            className="w-full bg-black/50 border border-white/20 p-3 text-white focus:border-cyber-cyan outline-none transition-colors"
-                            onChange={handleChange}
-                        />
-                    )}
-                    <input 
-                        name="email" type="email" placeholder="NEURAL LINK (EMAIL)" required 
-                        className="w-full bg-black/50 border border-white/20 p-3 text-white focus:border-cyber-cyan outline-none transition-colors"
-                        onChange={handleChange}
-                    />
-                    <input 
-                        name="password" type="password" placeholder="PASSPHRASE" required 
-                        className="w-full bg-black/50 border border-white/20 p-3 text-white focus:border-cyber-cyan outline-none transition-colors"
-                        onChange={handleChange}
-                    />
-
-                    <button 
-                        disabled={loading}
-                        className="w-full py-4 bg-cyber-cyan text-black font-black uppercase tracking-widest hover:bg-white transition-all clip-cyber-btn disabled:opacity-50 mt-4"
-                    >
-                        {loading ? 'PROCESSING...' : (isLogin ? 'ACCESS MAINFRAME' : 'GENERATE ID')}
-                    </button>
-                </form>
-
-                <div className="mt-6 text-center">
-                    <button 
-                        onClick={() => setIsLogin(!isLogin)} 
-                        className="text-cyber-pink hover:text-white text-xs uppercase tracking-widest font-bold"
-                    >
-                        {isLogin ? "Need an identity? Register" : "Already verified? Login"}
-                    </button>
-                </div>
+        <div className="max-w-4xl mx-auto px-6 mt-6">
+            <div className="bg-red-900/40 border border-red-500/40 text-red-200 p-4 font-mono text-sm clip-cyber">
+                {error}
             </div>
         </div>
     );
@@ -226,9 +141,14 @@ const NavBar = ({ user, onOpenStore, onOpenAuth, onLogout }) => (
                     </button>
                 </>
             ) : (
-                <button onClick={onOpenAuth} className="px-6 py-2 border border-cyber-cyan/30 text-cyber-cyan font-rajdhani font-bold hover:bg-cyber-cyan hover:text-black transition-all clip-cyber-btn text-lg">
-                    // LOGIN
-                </button>
+                <>
+                    <button onClick={() => onOpenAuth('login')} className="px-6 py-2 border border-cyber-cyan/30 text-cyber-cyan font-rajdhani font-bold hover:bg-cyber-cyan hover:text-black transition-all clip-cyber-btn text-lg">
+                        // LOGIN
+                    </button>
+                    <button onClick={() => onOpenAuth('signup')} className="px-6 py-2 border border-cyber-pink/30 text-cyber-pink font-rajdhani font-bold hover:bg-cyber-pink hover:text-black transition-all clip-cyber-btn text-lg">
+                        // REGISTER
+                    </button>
+                </>
             )}
         </div>
     </nav>
@@ -240,31 +160,114 @@ const NavBar = ({ user, onOpenStore, onOpenAuth, onLogout }) => (
 const App = () => {
     const [view, setView] = useState('home');
     const [user, setUser] = useState(null);
-    const [showAuth, setShowAuth] = useState(false);
     const [showStore, setShowStore] = useState(false);
+    const [auth0Client, setAuth0Client] = useState(null);
+    const [auth0Config, setAuth0Config] = useState(null);
+    const [authError, setAuthError] = useState("");
 
     // Initial Load & Auth Check
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-        if (storedUser && token) {
-            setUser(JSON.parse(storedUser));
-            // Optional: Verify token with backend here
-        }
+        let cancelled = false;
 
-        // Handle Payment Success
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('success') === 'true') {
-            alert(`PAYMENT SUCCESSFUL: ${params.get('item')}`);
-            window.history.replaceState({}, document.title, "/");
-        }
+        const init = async () => {
+            setAuthError("");
+            try {
+                const res = await fetch('/.netlify/functions/auth0_config', { cache: 'no-store' });
+                const cfg = await res.json();
+                if (!res.ok) throw new Error(cfg?.error || 'Auth0 config error');
+                if (cancelled) return;
+
+                setAuth0Config(cfg);
+
+                const client = await createAuth0Client({
+                    domain: cfg.domain,
+                    clientId: cfg.clientId,
+                    cacheLocation: 'localstorage',
+                    useRefreshTokens: true,
+                    authorizationParams: {
+                        redirect_uri: window.location.origin,
+                        scope: 'openid profile email',
+                        ...(cfg.audience ? { audience: cfg.audience } : {})
+                    }
+                });
+
+                if (cancelled) return;
+                setAuth0Client(client);
+
+                const qs = window.location.search;
+                const isCallback = qs.includes('code=') && qs.includes('state=');
+                if (isCallback) {
+                    await client.handleRedirectCallback();
+                    window.history.replaceState({}, document.title, "/");
+                }
+
+                const authed = await client.isAuthenticated();
+                if (!authed) return;
+
+                const profile = await client.getUser();
+                const token = cfg.audience
+                    ? await client.getTokenSilently()
+                    : (await client.getIdTokenClaims())?.__raw;
+                if (!token) throw new Error('Unable to obtain a session token');
+
+                const userRes = await fetch('/.netlify/functions/get_user', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        email: profile?.email || null,
+                        username: profile?.nickname || profile?.name || null
+                    })
+                });
+
+                const userData = await userRes.json();
+                if (!userRes.ok) throw new Error(userData?.error || 'Failed to load user');
+                if (cancelled) return;
+                setUser(userData);
+            } catch (e) {
+                if (!cancelled) setAuthError(e?.message || 'Auth error');
+            }
+
+            // Handle Payment Success
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('success') === 'true') {
+                alert(`PAYMENT SUCCESSFUL: ${params.get('item')}`);
+                window.history.replaceState({}, document.title, "/");
+            }
+        };
+
+        init();
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
         setUser(null);
         setView('home');
+        setAuthError("");
+        if (auth0Client) {
+            auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+        }
+    };
+
+    const handleAuthRedirect = async (mode) => {
+        if (!auth0Client || !auth0Config) {
+            setAuthError("Auth system is still initializing.");
+            return;
+        }
+        setAuthError("");
+        const isSignup = mode === 'signup';
+        await auth0Client.loginWithRedirect({
+            authorizationParams: {
+                redirect_uri: window.location.origin,
+                scope: 'openid profile email',
+                ...(auth0Config.audience ? { audience: auth0Config.audience } : {}),
+                ...(isSignup ? { screen_hint: 'signup' } : {})
+            }
+        });
     };
 
     if (view === 'neon_storm') {
@@ -275,13 +278,13 @@ const App = () => {
         <div className="min-h-screen flex flex-col relative z-10">
             <NavBar 
                 user={user} 
-                onOpenAuth={() => setShowAuth(true)} 
+                onOpenAuth={handleAuthRedirect}
                 onOpenStore={() => setShowStore(true)}
                 onLogout={handleLogout}
             />
             
-            {showAuth && <AuthModal onClose={() => setShowAuth(false)} onLoginSuccess={setUser} />}
             {showStore && <CyberStore onClose={() => setShowStore(false)} user={user} />}
+            <AuthStatusBanner error={authError} />
             
             <div className="relative pt-24 pb-20 px-6 text-center overflow-hidden">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyber-pink/20 blur-[150px] rounded-full pointer-events-none" />
