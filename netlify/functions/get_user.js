@@ -2,14 +2,14 @@ const { Client } = require('pg');
 const { verifyAuth0Jwt } = require('../utils/auth0');
 
 exports.handler = async (event) => {
+    let client = null;
     try {
         const decoded = await verifyAuth0Jwt(event);
-        const client = new Client({ connectionString: process.env.DATABASE_URL });
+        client = new Client({ connectionString: process.env.DATABASE_URL });
         
         await client.connect();
         const auth0Sub = decoded?.sub;
         if (!auth0Sub) {
-            await client.end();
             return { statusCode: 401, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ error: "Invalid token" }) };
         }
 
@@ -29,7 +29,6 @@ exports.handler = async (event) => {
         );
 
         if (existing.rows.length > 0) {
-            await client.end();
             return {
                 statusCode: 200,
                 headers: { 'content-type': 'application/json' },
@@ -38,7 +37,6 @@ exports.handler = async (event) => {
         }
 
         if (!email) {
-            await client.end();
             return {
                 statusCode: 400,
                 headers: { 'content-type': 'application/json' },
@@ -69,10 +67,8 @@ exports.handler = async (event) => {
             } catch (e) {
                 // Unique constraint collision; retry with suffix.
                 if (!String(e?.code) || String(e.code) !== '23505') throw e;
-            }
+                }
         }
-
-        await client.end();
 
         if (!inserted) {
             return {
@@ -95,5 +91,9 @@ exports.handler = async (event) => {
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ error: statusCode === 401 ? 'Unauthorized' : 'Server Error' })
         };
+    } finally {
+        if (client) {
+            await client.end().catch(() => {});
+        }
     }
 };
