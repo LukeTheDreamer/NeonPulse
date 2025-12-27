@@ -1,28 +1,32 @@
-const { Client } = require('pg');
+const { neon } = require('@netlify/neon');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
-    if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Method Not Allowed' })
+        };
+    }
 
     const { email, password } = JSON.parse(event.body);
-    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    const sql = neon();
 
     try {
-        await client.connect();
-
         // 1. Find User
-        const result = await client.query('SELECT * FROM users WHERE email = $1', [email]);
-        if (result.rows.length === 0) {
-            return { statusCode: 401, body: JSON.stringify({ error: "Invalid credentials" }) };
+        const result = await sql`SELECT * FROM users WHERE email = ${email}`;
+        if (result.length === 0) {
+            return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: "Invalid credentials" }) };
         }
 
-        const user = result.rows[0];
+        const user = result[0];
 
         // 2. Check Password
         const validPass = await bcrypt.compare(password, user.password_hash);
         if (!validPass) {
-            return { statusCode: 401, body: JSON.stringify({ error: "Invalid credentials" }) };
+            return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: "Invalid credentials" }) };
         }
 
         // 3. Generate Token
@@ -35,6 +39,7 @@ exports.handler = async (event) => {
         // Return user data (excluding password)
         return {
             statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 token,
                 user: {
@@ -48,8 +53,6 @@ exports.handler = async (event) => {
 
     } catch (err) {
         console.error(err);
-        return { statusCode: 500, body: JSON.stringify({ error: "Server Error" }) };
-    } finally {
-        await client.end();
+        return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: "Server Error" }) };
     }
 };
