@@ -1,44 +1,54 @@
 const { Client } = require('pg');
 
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-    body: JSON.stringify(body),
+exports.handler = async (event, context) => {
+  // 1. CORS Headers (Allows your game to talk to this script)
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
   };
-}
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return json(405, { error: 'Method Not Allowed' });
-
-  let payload = {};
-  try {
-    payload = event.body ? JSON.parse(event.body) : {};
-  } catch {
-    return json(400, { error: 'Invalid JSON body' });
+  // 2. Handle Preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
   }
 
-  const username = String(payload.username || '').trim();
-  const score = Number.parseInt(String(payload.score ?? ''), 10);
-
-  if (!username) return json(400, { error: 'Missing username' });
-  if (!Number.isFinite(score)) return json(400, { error: 'Missing score' });
-  if (username.length > 50) return json(400, { error: 'Username too long' });
-  if (score < 0) return json(400, { error: 'Invalid score' });
+  // 3. Connect to Database (Only if configured)
+  if (!process.env.DATABASE_URL) {
+    return { statusCode: 200, headers, body: JSON.stringify({ message: "No DB configured, score ignored (Dev Mode)" }) };
+  }
 
   const client = new Client({ connectionString: process.env.DATABASE_URL });
+
   try {
     await client.connect();
-    const result = await client.query(
-      `INSERT INTO scores (username, score)
-       VALUES ($1, $2)
-       RETURNING id, username, score, date`,
-      [username, score],
-    );
-    return json(200, result.rows[0]);
-  } catch (err) {
-    return json(500, { error: 'Server Error' });
-  } finally {
-    await client.end().catch(() => {});
+    const data = JSON.parse(event.body);
+    const { username, score } = data;
+
+    // Simple Validation
+    if (!username || !score) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing data" }) };
+    }
+
+    // Insert Score
+    const query = 'INSERT INTO scores (username, score, date) VALUES ($1, $2, NOW()) RETURNING *';
+    await client.query(query, [username, score]);
+
+    await client.end();
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: "Score saved!" }),
+    };
+
+  } catch (error) {
+    console.error("DB Error:", error);
+    await client.end(); // Ensure connection closes
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: error.message }),
+    };
   }
 };
