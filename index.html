@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON PULSE | Cyber Arcade</title>
+    <title>NEON PULSE | System Entry</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,10 +23,11 @@
             background-color: var(--dark-bg);
             color: white;
             font-family: 'Rajdhani', sans-serif;
+            margin: 0;
             overflow-x: hidden;
         }
 
-        /* Scanline Effect */
+        /* Cyberpunk Scanline Effect */
         body::before {
             content: " ";
             display: block;
@@ -45,22 +46,17 @@
             background-size: 50px 50px;
         }
 
-        .neon-border {
-            border: 1px solid var(--neon-cyan);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.1);
+        .clip-path-cyber {
+            clip-path: polygon(0% 0%, 90% 0%, 100% 10%, 100% 100%, 10% 100%, 0% 90%);
         }
 
         .neon-text-cyan {
             text-shadow: 0 0 10px var(--neon-cyan);
         }
 
-        .clip-path-cyber {
-            clip-path: polygon(0% 0%, 90% 0%, 100% 10%, 100% 100%, 10% 100%, 0% 90%);
-        }
-
-        /* Animação do Loader */
-        .loading-glitch {
-            animation: glitch 1s linear infinite;
+        /* Loading Glitch Animation */
+        .glitch-text {
+            animation: glitch 1.5s linear infinite;
         }
 
         @keyframes glitch {
@@ -76,11 +72,13 @@
 
     <div id="root">
         <div class="flex flex-col items-center justify-center h-screen relative z-50">
-            <div class="w-20 h-20 border-4 border-cyan-400 border-t-pink-600 rounded-none animate-spin mb-8 clip-path-cyber"></div>
-            <h1 class="font-orbitron text-cyan-400 neon-text-cyan tracking-[0.5em] uppercase text-xl loading-glitch">
+            <div class="w-16 h-16 border-4 border-cyan-400 border-t-pink-600 animate-spin mb-8 clip-path-cyber"></div>
+            <h1 class="font-orbitron text-cyan-400 neon-text-cyan tracking-[0.5em] uppercase text-lg glitch-text">
                 Establishing Neural Link...
             </h1>
-            <p class="text-white/40 mt-4 font-mono text-xs tracking-widest">CONNECTING TO NEON PULSE MAIN DIV... [OK]</p>
+            <p class="text-white/30 mt-4 font-mono text-[10px] tracking-widest uppercase">
+                Loading Main Module // Protocol: Mictlan
+            </p>
         </div>
     </div>
 
@@ -91,12 +89,10 @@
     <script src="/js/app.js"></script>
 
     <script>
-        // Lógica de redirecionamento do Netlify Identity
         if (window.netlifyIdentity) {
             window.netlifyIdentity.on("init", user => {
                 if (!user) {
                     window.netlifyIdentity.on("login", () => {
-                        // Força o reload para garantir que o app.js veja o novo usuário
                         document.location.href = "/";
                     });
                 }
