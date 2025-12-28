@@ -25,7 +25,7 @@
 
         <div id="ui-layer" class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between hidden">
             <div class="flex justify-between items-start w-full">
-                <a href="index.html" class="pointer-events-auto text-cyan-400 bg-black/50 border border-cyan-400/30 px-4 py-2 clip-cyber-btn hover:bg-cyan-400/20 text-sm font-bold no-underline transition-colors">
+                <a href="../../index.html" class="pointer-events-auto text-cyan-400 bg-black/50 border border-cyan-400/30 px-4 py-2 clip-cyber-btn hover:bg-cyan-400/20 text-sm font-bold no-underline transition-colors">
                     « ARCADE HUB
                 </a>
                 
@@ -101,7 +101,7 @@
 
     </div>
 
-    <script src="neonstorm.js"></script>
+    <script src="../neonstorm.js"></script>
 
     <script>
         // --- 1. CONFIG & STATE ---
@@ -136,7 +136,7 @@
                 initGame();
             } else {
                 console.error("NeonStorm: initGame() function not found in neonstorm.js");
-                alert("System Error: Game Engine not loaded.");
+                alert("System Error: Game Engine not loaded. \n\nPlease ensure neonstorm.js is in the 'js' folder.");
             }
         };
 
