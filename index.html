@@ -3,101 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON PULSE | System Entry</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-
+    <title>NEON PULSE | Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <style>
         :root {
-            --neon-cyan: #00f3ff;
-            --neon-pink: #ff003c;
-            --dark-bg: #050505;
+            --cyan: #00f3ff;
+            --pink: #ff00ff;
+            --gold: #ffd700;
+            --bg: #0a0a0c;
+            --panel: rgba(20, 20, 25, 0.85);
         }
 
         body {
-            background-color: var(--dark-bg);
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
             color: white;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Orbitron', sans-serif;
             margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* Cyberpunk Scanline Effect */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 100;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
+        /* The Main Outer Frame seen in the image */
+        .main-console {
+            width: 90vw;
+            max-width: 1100px;
+            border: 4px solid #1e2d35;
+            padding: 40px;
+            position: relative;
+            background: var(--panel);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-radius: 20px;
         }
 
-        .cyber-grid {
-            background-image: linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
+        /* Header Layout */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
         }
 
-        .clip-path-cyber {
-            clip-path: polygon(0% 0%, 90% 0%, 100% 10%, 100% 100%, 10% 100%, 0% 90%);
+        .title {
+            font-size: 3rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: linear-gradient(to right, var(--cyan), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.5));
         }
 
-        .neon-text-cyan {
-            text-shadow: 0 0 10px var(--neon-cyan);
+        .user-status {
+            border: 2px solid var(--cyan);
+            padding: 10px 20px;
+            font-size: 0.8rem;
+            text-align: right;
+            clip-path: polygon(0 0, 100% 0, 100% 70%, 80% 100%, 0 100%);
         }
 
-        /* Loading Glitch Animation */
-        .glitch-text {
-            animation: glitch 1.5s linear infinite;
+        /* Simulation Grid */
+        .simulation-container {
+            border: 2px solid var(--cyan);
+            padding: 30px;
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            background: rgba(0, 243, 255, 0.05);
+            border-radius: 10px;
         }
 
-        @keyframes glitch {
-            2%, 64% { transform: translate(2px, 0) skew(0deg); }
-            4%, 60% { transform: translate(-2px, 0) skew(0deg); }
-            62% { transform: translate(0, 0) skew(5deg); }
+        .sim-card {
+            background: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            text-align: center;
+            opacity: 0.6;
         }
+
+        .sim-card.active {
+            opacity: 1;
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px var(--cyan);
+        }
+
+        .sim-img {
+            width: 100%;
+            height: 120px;
+            background: #111;
+            margin-bottom: 10px;
+            object-fit: cover;
+        }
+
+        /* The 5-Button Supply Depot */
+        .supply-depot-title {
+            text-align: center;
+            color: var(--cyan);
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+        }
+
+        .depot-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .depot-btn {
+            background: black;
+            border: 2px solid var(--pink);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .depot-btn:hover {
+            transform: scale(1.05);
+            background: rgba(255, 0, 255, 0.1);
+            box-shadow: 0 0 20px var(--pink);
+        }
+
+        .depot-btn.legend { border-color: var(--gold); color: var(--gold); }
+        .depot-btn.veteran { border-color: #00ff88; color: #00ff88; }
+        .depot-btn.credits { border-color: var(--cyan); color: var(--cyan); }
+
+        .icon { font-size: 1.5rem; margin-bottom: 5px; }
+
+        .pure-donate-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-pure {
+            background: transparent;
+            border: 1px dashed white;
+            color: white;
+            padding: 10px 40px;
+            font-family: 'Orbitron';
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .btn-pure:hover { opacity: 1; border-style: solid; }
     </style>
 </head>
 <body>
 
-    <div class="fixed inset-0 cyber-grid pointer-events-none"></div>
+    <div class="main-console">
+        <header class="header">
+            <div class="title">Neon Pulse</div>
+            <div class="user-status" id="user-display">
+                PILOT: UNKNOWN<br>
+                CREDITS: 0000 <br>
+                <button onclick="netlifyIdentity.open()" style="background:none; border:none; color:var(--cyan); cursor:pointer; font-family:inherit;">[ LOGIN ]</button>
+            </div>
+        </header>
 
-    <div id="root">
-        <div class="flex flex-col items-center justify-center h-screen relative z-50">
-            <div class="w-16 h-16 border-4 border-cyan-400 border-t-pink-600 animate-spin mb-8 clip-path-cyber"></div>
-            <h1 class="font-orbitron text-cyan-400 neon-text-cyan tracking-[0.5em] uppercase text-lg glitch-text">
-                Establishing Neural Link...
-            </h1>
-            <p class="text-white/30 mt-4 font-mono text-[10px] tracking-widest uppercase">
-                Loading Main Module // Protocol: Mictlan
-            </p>
+        <section class="simulation-container">
+            <div class="sim-card active">
+                <img src="https://images.unsplash.com/photo-1614728263952-84ea206f99b6?auto=format&fit=crop&q=80&w=400" alt="Neon Storm" class="sim-img">
+                <div style="font-size: 0.8rem; margin-bottom: 10px;">NEON STORM</div>
+                <button onclick="window.location.href='/neonstorm.html'" style="background:var(--cyan); border:none; padding:5px 10px; cursor:pointer; font-weight:bold;">LAUNCH SIM</button>
+            </div>
+            <div class="sim-card">
+                <div class="sim-img" style="display:flex; align-items:center; justify-content:center; color:#333;">ENCRYPTED</div>
+                <div style="font-size: 0.7rem; color:#444;">UNAVAILABLE</div>
+            </div>
+            <div class="sim-card">
+                <div class="sim-img" style="display:flex; align-items:center; justify-content:center; color:#333;">ENCRYPTED</div>
+                <div style="font-size: 0.7rem; color:#444;">UNAVAILABLE</div>
+            </div>
+        </section>
+
+        <h3 class="supply-depot-title">// SUPPLY DEPOT //</h3>
+        
+        <div class="depot-grid">
+            <div class="depot-btn credits" onclick="handleBuy('credits')">
+                <span class="icon">💎</span>
+                <span style="font-size:0.6rem">5,000 CREDITS</span>
+                <span style="font-weight:bold">$5.00</span>
+            </div>
+            <div class="depot-btn" onclick="handleBuy('tier1')">
+                <span class="icon">🔸</span>
+                <span style="font-size:0.6rem">INITIATE TIER</span>
+                <span style="font-weight:bold">$30.00</span>
+            </div>
+            <div class="depot-btn veteran" onclick="handleBuy('tier2')">
+                <span class="icon">🛡️</span>
+                <span style="font-size:0.6rem">VETERAN TIER</span>
+                <span style="font-weight:bold">$100.00</span>
+            </div>
+            <div class="depot-btn legend" onclick="handleBuy('tier3')">
+                <span class="icon">👑</span>
+                <span style="font-size:0.6rem">LEGEND TIER</span>
+                <span style="font-weight:bold">$500.00</span>
+            </div>
+        </div>
+
+        <div class="pure-donate-container">
+            <button class="btn-pure" onclick="handleBuy('donate')">💖 PURE DONATION</button>
         </div>
     </div>
 
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-
-    <script src="/js/games/neonstorm.js"></script>
-    <script src="/js/app.js"></script>
-
     <script>
-        if (window.netlifyIdentity) {
-            window.netlifyIdentity.on("init", user => {
-                if (!user) {
-                    window.netlifyIdentity.on("login", () => {
-                        document.location.href = "/";
-                    });
-                }
-            });
+        function handleBuy(type) {
+            const user = netlifyIdentity.currentUser();
+            if (!user) {
+                alert("Neural Link Required. Please Login.");
+                netlifyIdentity.open();
+                return;
+            }
+            alert("Initializing Stripe for: " + type);
+            // In the next step, we'll link this to /.netlify/functions/create-checkout
         }
+
+        // Update UI when user logs in
+        netlifyIdentity.on('login', user => {
+            document.getElementById('user-display').innerHTML = `
+                PILOT: ${user.user_metadata.full_name || user.email.split('@')[0]}<br>
+                LEVEL: 1 Supporter<br>
+                <button onclick="netlifyIdentity.logout()" style="background:none; border:none; color:var(--pink); cursor:pointer; font-family:inherit;">[ LOGOUT ]</button>
+            `;
+            netlifyIdentity.close();
+        });
     </script>
 </body>
 </html>
