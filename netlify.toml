@@ -1,10 +1,15 @@
+[build]
+  # If your files are in the root, leave this as "."
+  # If they are in a folder like 'dist', change to "dist"
+  publish = "."
+
 [functions]
   node_bundler = "esbuild"
 
 [identity]
   enable = true
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# NO REDIRECTS SECTION: 
+# Since this is a static-first, non-SPA project, we omit the catch-all redirect.
+# This prevents the "Unexpected token '<'" error by allowing the server 
+# to return a 404 for missing files instead of forcing index.html.
