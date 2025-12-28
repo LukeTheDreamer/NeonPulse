@@ -74,6 +74,21 @@ Payments:
 - Frontend checks unlocks via API
 - Payments and unlocks must never be client-trusted
 
+Production setup (Payments & DB) ✅
+- Add required env vars (see `.env.example`) to your environment or Netlify site settings.
+- Run `npm install` to install dependencies (`stripe`, `pg`, etc.).
+- Initialize DB (local/dev):
+  - Set `INIT_DB_TOKEN` in your env to a secret value.
+  - POST an empty request to `/.netlify/functions/init_db` with header `Authorization: Bearer <INIT_DB_TOKEN>` to create tables (scores, users, payments).
+- Start Netlify locally for smoke tests: `npx netlify dev` (it will serve functions locally).
+- To test webhooks locally: use `stripe listen --forward-to localhost:8888/.netlify/functions/stripe_webhook` and ensure `STRIPE_WEBHOOK_SECRET` is set from `stripe listen` output.
+
+Security / hardening notes:
+- Webhook processing is idempotent (uses `payments.stripe_session_id` unique constraint).
+- Store purchases require valid Auth0 JWT tokens and are recorded server-side.
+- Make sure you do NOT commit `.env` to Git — we provide `.env.example`.
+
+
 Cheating & Anti-Cheat Policy:
 - Client-side games are considered untrusted
 - Assume scores can be manipulated

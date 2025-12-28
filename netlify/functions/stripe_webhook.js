@@ -1,107 +1,135 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Client } = require('pg');
 
-exports.handler = async (event) => {
-  const sig = event.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  let stripeEvent;
+function json(statusCode, body) {
+  return { statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) };
+}
 
-  // 1. Verify the event came from Stripe
-  try {
-    stripeEvent = stripe.webhooks.constructEvent(event.body, sig, webhookSecret);
-  } catch (err) {
-    console.error(`Webhook Signature Error: ${err.message}`);
-    return { statusCode: 400, body: `Webhook Error: ${err.message}` };
+exports.handler = async (event) => {
+  // Use raw body for signature verification
+  const payload = event.body;
+  const sig = event.headers['stripe-signature'] || event.headers['Stripe-Signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('Stripe webhook secret not configured');
+    return json(500, { error: 'Webhook not configured' });
   }
 
-  // 2. Handle the specific event type
+  let stripeEvent;
+  try {
+    stripeEvent = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
+  } catch (err) {
+    console.error(`Webhook Signature Error: ${err.message}`);
+    return json(400, { error: `Webhook Error: ${err.message}` });
+  }
+
+  // Only handle checkout.session.completed for now, idempotently
   if (stripeEvent.type === 'checkout.session.completed') {
     const session = stripeEvent.data.object;
-    
-    // Check the "action" metadata we attached in create_checkout.js
-    if (session.metadata?.action === 'supporter_upgrade') {
-      await fulfillSupporterPerks(session.metadata.userId, parseInt(session.metadata.tier));
-    } 
-    else if (session.metadata?.action === 'donation') {
-      await recordDonation(session.metadata.userId, parseFloat(session.metadata.amount_donated));
+    const sessionId = session.id;
+    const eventId = stripeEvent.id;
+
+    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
+
+    try {
+      // Attempt to insert payment record - unique constraint on stripe_session_id prevents duplicates
+      const insert = await client.query(
+        `INSERT INTO payments (stripe_session_id, stripe_event_id, user_id, amount, metadata) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (stripe_session_id) DO NOTHING RETURNING id`,
+        [sessionId, eventId, null, session.amount_total || null, session.metadata ? JSON.stringify(session.metadata) : null]
+      );
+
+      if (!insert.rows || insert.rows.length === 0) {
+        console.log(`Session ${sessionId} already processed; ignoring`);
+        return json(200, { received: true, idempotent: true });
+      }
+
+      // Process metadata actions
+      const meta = session.metadata || {};
+      if (meta.action === 'supporter_upgrade') {
+        await fulfillSupporterPerks(client, meta.userId, parseInt(meta.tier));
+      } else if (meta.action === 'donation') {
+        await recordDonation(client, meta.userId, parseFloat(meta.amount_donated));
+      } else if (meta.item) {
+        // Optional: grant in-game items (store purchases)
+        await grantStoreItem(client, meta.auth0_sub || null, meta.item);
+      }
+
+      return json(200, { received: true });
+    } catch (err) {
+      console.error('Webhook processing failed:', err);
+      return json(500, { error: 'Processing Error' });
+    } finally {
+      await client.end();
     }
   }
 
-  return { statusCode: 200, body: JSON.stringify({ received: true }) };
+  // For other event types, respond 200
+  return json(200, { received: true });
 };
 
-// --- HELPER: Unlock Perks ---
-async function fulfillSupporterPerks(userId, tier) {
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
+// --- HELPER: Unlock Perks (uses provided client) ---
+async function fulfillSupporterPerks(client, userId, tier) {
+  if (!userId) {
+    console.warn('No userId provided for supporter upgrade');
+    return;
+  }
 
   let intervalStr;
   let skinsToAdd;
 
-  // Define perks based on tier
   switch (tier) {
-    case 1: // INITIATE
+    case 1:
       intervalStr = "INTERVAL '1 month'";
-      skinsToAdd = ['VOID']; 
+      skinsToAdd = ['VOID'];
       break;
-    case 2: // VETERAN
+    case 2:
       intervalStr = "INTERVAL '1 year'";
-      skinsToAdd = ['VOID', 'MATRIX', 'GOLD']; 
+      skinsToAdd = ['VOID', 'MATRIX', 'GOLD'];
       break;
-    case 3: // LEGEND
-      intervalStr = "INTERVAL '100 years'"; // Lifetime
-      skinsToAdd = ['VOID', 'MATRIX', 'GOLD', 'NEON_GOD']; 
+    case 3:
+      intervalStr = "INTERVAL '100 years'";
+      skinsToAdd = ['VOID', 'MATRIX', 'GOLD', 'NEON_GOD'];
       break;
     default:
       return;
   }
 
   try {
-    console.log(`Upgrading User ${userId} to Tier ${tier}`);
-    
-    const query = `
-      UPDATE users 
-      SET 
+    await client.query(`
+      UPDATE users
+      SET
         supporter_tier = GREATEST(supporter_tier, $1),
-        -- Add time to existing expiry, or start from now
-        ad_free_until = CASE 
-          WHEN ad_free_until > NOW() THEN ad_free_until + ${intervalStr}
-          ELSE NOW() + ${intervalStr}
-        END,
-        -- Merge new skins with existing ones (avoid duplicates)
-        unlocked_skins = (
-          SELECT array_agg(DISTINCT e) 
-          FROM unnest(unlocked_skins || $2::text[]) AS e
-        )
+        ad_free_until = CASE WHEN ad_free_until > NOW() THEN ad_free_until + ${intervalStr} ELSE NOW() + ${intervalStr} END,
+        unlocked_skins = (SELECT array_agg(DISTINCT e) FROM unnest(unlocked_skins || $2::text[]) AS e)
       WHERE id = $3
-    `;
-    
-    await client.query(query, [tier, skinsToAdd, userId]);
+    `, [tier, skinsToAdd, userId]);
   } catch (err) {
-    console.error('Database update failed:', err);
-  } finally {
-    await client.end();
+    console.error('fulfillSupporterPerks error:', err.message || err);
   }
 }
 
-// --- HELPER: Record Donation ---
-async function recordDonation(userId, amount) {
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-
+// --- HELPER: Record Donation (uses provided client) ---
+async function recordDonation(client, userId, amount) {
+  if (!userId) {
+    console.warn('No userId provided for donation');
+    return;
+  }
   try {
-    console.log(`User ${userId} donated $${amount}`);
-    // Assuming you have a total_donated column. If not, this query handles it gracefully
-    // by checking if the column exists or simply logging it if you don't track totals.
-    const query = `
-      UPDATE users 
-      SET total_donated = COALESCE(total_donated, 0) + $1 
-      WHERE id = $2
-    `;
-    await client.query(query, [amount, userId]);
+    await client.query(`UPDATE users SET total_donated = COALESCE(total_donated, 0) + $1 WHERE id = $2`, [amount, userId]);
   } catch (err) {
-    console.error('Donation record failed (ignore if column missing):', err.message);
-  } finally {
-    await client.end();
+    console.error('recordDonation error:', err.message || err);
+  }
+}
+
+// --- HELPER: Grant Store Item (simple placeholder) ---
+async function grantStoreItem(client, auth0_sub, itemName) {
+  if (!auth0_sub) return;
+  try {
+    console.log(`Granting item ${itemName} to ${auth0_sub}`);
+    // You can implement actual granting logic here, e.g. crediting an account.
+    await client.query(`UPDATE users SET credits = credits + $1 WHERE auth0_sub = $2`, [ itemName === 'credits_5000' ? 5000 : 0, auth0_sub ]);
+  } catch (err) {
+    console.error('grantStoreItem error:', err.message || err);
   }
 }
