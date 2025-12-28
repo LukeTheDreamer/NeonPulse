@@ -415,11 +415,11 @@ window.NeonStormGame = ({ onExit }) => {
                     b.hp -= 10; bu.active = false; createExplosion(bu.x, bu.y, '#fff', 2, 0.5);
                     s.currentCombo++; setComboCount(s.currentCombo); addScore(10 * s.currentCombo); s.lastKillTime = now;
                     if (b.hp <= 0) {
-                         createExplosion(b.x + b.width/2, b.y + b.height/2, b.color, 100, 2); createShockwave(b.x + b.width/2, b.y + b.height/2, b.color);
-                         s.boss = null; setBossActive(false); s.bossLevel++; s.nextBossScore += 10000; addScore(5000); 
-                         s.bossCooldown = now + 30000; 
-                         gameStateRef.current.floatingTexts.push({ x: b.x + b.width/2, y: b.y, text: "GOD SLAIN", life: 1.0, scale: 0, vy: -2, color: '#ff0000' });
-                         s.hitStop = 10; startMusic(false); playSfx('explosion');
+                          createExplosion(b.x + b.width/2, b.y + b.height/2, b.color, 100, 2); createShockwave(b.x + b.width/2, b.y + b.height/2, b.color);
+                          s.boss = null; setBossActive(false); s.bossLevel++; s.nextBossScore += 10000; addScore(5000); 
+                          s.bossCooldown = now + 30000; 
+                          gameStateRef.current.floatingTexts.push({ x: b.x + b.width/2, y: b.y, text: "GOD SLAIN", life: 1.0, scale: 0, vy: -2, color: '#ff0000' });
+                          s.hitStop = 10; startMusic(false); playSfx('explosion');
                     }
                 }
             });
@@ -702,23 +702,23 @@ window.NeonStormGame = ({ onExit }) => {
                                 const isEquipped = activeTheme.id === theme.id;
                                 return (
                                     <div key={theme.id} className={`p-4 border ${isEquipped ? 'border-yellow-400 bg-yellow-400/10' : 'border-white/20 bg-white/5'} flex flex-col items-center gap-2 group hover:border-cyan-400 transition-all`}>
-                                        <div className="w-16 h-16 rounded-full mb-2 border-2" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`, borderColor: theme.primary }}></div>
-                                        <h3 className="font-bold text-white text-sm">{theme.name}</h3>
-                                        {isUnlocked ? (
-                                            <button 
-                                                onClick={() => { setActiveTheme(theme); }} 
-                                                className={`px-4 py-1 text-xs font-bold uppercase ${isEquipped ? 'bg-yellow-400 text-black' : 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-400 hover:text-black'} clip-cyber-btn w-full`}
-                                            >
-                                                {isEquipped ? 'EQUIPPED' : 'EQUIP'}
-                                            </button>
-                                        ) : (
-                                            <button 
-                                                onClick={() => handleBuyTheme(theme.id)} 
-                                                className="px-4 py-1 text-xs font-bold uppercase bg-white/10 text-white hover:bg-white hover:text-black clip-cyber-btn w-full"
-                                            >
-                                                BUY {theme.price}
-                                            </button>
-                                        )}
+                                            <div className="w-16 h-16 rounded-full mb-2 border-2" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`, borderColor: theme.primary }}></div>
+                                            <h3 className="font-bold text-white text-sm">{theme.name}</h3>
+                                            {isUnlocked ? (
+                                                <button 
+                                                    onClick={() => { setActiveTheme(theme); }} 
+                                                    className={`px-4 py-1 text-xs font-bold uppercase ${isEquipped ? 'bg-yellow-400 text-black' : 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-400 hover:text-black'} clip-cyber-btn w-full`}
+                                                >
+                                                    {isEquipped ? 'EQUIPPED' : 'EQUIP'}
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleBuyTheme(theme.id)} 
+                                                    className="px-4 py-1 text-xs font-bold uppercase bg-white/10 text-white hover:bg-white hover:text-black clip-cyber-btn w-full"
+                                                >
+                                                    BUY {theme.price}
+                                                </button>
+                                            )}
                                     </div>
                                 );
                             })}
@@ -862,6 +862,7 @@ window.NeonStormGame = ({ onExit }) => {
         </div>
     );
 };
+
 // ==========================================
 // 3. GAME INITIALIZATION (THE BRIDGE)
 // ==========================================
