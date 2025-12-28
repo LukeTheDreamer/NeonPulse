@@ -56,7 +56,8 @@
                 <div class="p-6 relative z-20">
                     <h2 class="text-3xl font-black text-cyan-400 font-orbitron mb-2">NEON STORM</h2>
                     <p class="text-gray-400 text-sm mb-6 h-12">Defeat Ancient Gods in this high-speed cyber-aztec bullet hell.</p>
-                    <a href="neonstorm.html" class="block w-full text-center bg-white text-black hover:bg-cyan-400 font-black py-4 uppercase clip-cyber-btn tracking-widest transition-all">
+                    
+                    <a href="games/neonstorm.html" class="block w-full text-center bg-white text-black hover:bg-cyan-400 font-black py-4 uppercase clip-cyber-btn tracking-widest transition-all">
                         LAUNCH SIMULATION
                     </a>
                 </div>
@@ -179,7 +180,8 @@
 
         const userState = {
             id: getUserId(),
-            credits: parseInt(localStorage.getItem('credits') || '100000'),
+            // Ensure this defaults to 0 and reads correctly
+            credits: parseInt(localStorage.getItem('credits') || '0'), 
             unlockedThemes: JSON.parse(localStorage.getItem('unlockedThemes') || '["NEON"]'),
             activeTheme: JSON.parse(localStorage.getItem('activeTheme') || JSON.stringify(THEMES.NEON))
         };
