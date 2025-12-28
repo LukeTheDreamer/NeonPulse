@@ -1,116 +1,142 @@
 const { useState, useEffect } = React;
 
+// Link to the game component defined in neonstorm.js
 const NeonStormGame = window.NeonStormGame;
 
 // ==========================================
-// CONFIG & CONSTANTS
+// 1. CONFIG & CONSTANTS
 // ==========================================
-// Store products are resolved server-side (Netlify Function) to Stripe Price IDs via environment variables.
 const STORE_ITEMS = {
-    CREDITS_5000: "credits_5000",
-    GOLDEN_SKIN: "golden_skin",
-    SUPPORTER_BADGE: "supporter_badge"
+    CREDITS_5000: { id: "credits_5000", type: "credits", amount: 5000, price: 5, label: "5,000 CREDITS", icon: "💎", color: "text-cyan-400" },
+    CREDITS_15000: { id: "credits_15000", type: "credits", amount: 15000, price: 12, label: "15,000 CREDITS", icon: "💎", color: "text-purple-400" },
+    CREDITS_50000: { id: "credits_50000", type: "credits", amount: 50000, price: 35, label: "50,000 CREDITS", icon: "💎", color: "text-yellow-400" },
+    TIER_1: { id: "tier_1", type: "tier", tier: 1, price: 30, label: "INITIATE TIER", icon: "🔸", color: "text-orange-500" },
+    TIER_2: { id: "tier_2", type: "tier", tier: 2, price: 90, label: "VETERAN TIER", icon: "🔷", color: "text-gray-400" },
+    TIER_3: { id: "tier_3", type: "tier", tier: 3, price: 500, label: "LEGEND TIER", icon: "👑", color: "text-yellow-500" }
 };
 
-const GAMES_DB = [
-    {
-        id: 'neon_storm',
-        title: 'Neon Storm',
-        desc: 'Defeat Ancient Gods in this high-speed cyber-aztec bullet hell.',
-        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop',
-        tags: ['ACTION', 'BULLET HELL'],
-        badge: 'NETRUNNER CHOICE',
-    },
-    {
-        id: 'cyber_chess',
-        title: 'Cyber Chess 2099',
-        desc: 'Quantum strategy. Predict the AI\'s next move before the simulation collapses.',
-        image: 'https://images.unsplash.com/photo-1586165368502-1bad197a6461?q=80&w=800&auto=format&fit=crop',
-        tags: ['STRATEGY', 'PUZZLE'],
-        badge: 'OFFLINE',
-    },
-    {
-        id: 'neural_racer',
-        title: 'Neural Racer',
-        desc: 'Train autonomous agents on procedurally generated neon highways.',
-        image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=800&auto=format&fit=crop',
-        tags: ['RACING', 'SIMULATION'],
-        badge: 'LOCKED',
-    }
-];
+// ==========================================
+// 2. COMPONENT: NAV BAR (With Badges)
+// ==========================================
+const NavBar = ({ user, onLogout, onOpenStore }) => {
+    const getTierBadge = (tier) => {
+        switch (tier) {
+            case 3: return <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-[10px] font-black px-2 py-0.5 clip-cyber-btn shadow-[0_0_10px_rgba(250,204,21,0.5)]">LEGEND</span>;
+            case 2: return <span className="bg-gradient-to-r from-gray-300 to-gray-500 text-black text-[10px] font-black px-2 py-0.5 clip-cyber-btn">VETERAN</span>;
+            case 1: return <span className="bg-gradient-to-r from-orange-400 to-orange-700 text-black text-[10px] font-black px-2 py-0.5 clip-cyber-btn">INITIATE</span>;
+            default: return null;
+        }
+    };
 
-// ==========================================
-// AUTH0 (LOGIN / REGISTER)
-// ==========================================
-const AuthStatusBanner = ({ error }) => {
-    if (!error) return null;
     return (
-        <div className="max-w-4xl mx-auto px-6 mt-6">
-            <div className="bg-red-900/40 border border-red-500/40 text-red-200 p-4 font-mono text-sm clip-cyber">
-                {error}
+        <nav className="flex justify-between items-center px-8 py-6 sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10">
+            <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.location.href = "/"}>
+                <div className="w-8 h-8 bg-cyan-400 clip-cyber-btn animate-pulse"></div>
+                <div className="font-orbitron font-black text-2xl tracking-widest text-white group-hover:text-cyan-400 transition-colors uppercase">
+                    Neon<span className="text-pink-500">Pulse</span>
+                </div>
             </div>
-        </div>
+            <div className="flex gap-4 items-center">
+                {user ? (
+                    <>
+                        <div className="flex flex-col items-end mr-4">
+                            <div className="flex items-center gap-2">
+                                {getTierBadge(user.supporter_tier)}
+                                <div className="text-cyan-400 font-bold font-orbitron tracking-widest text-sm uppercase">
+                                    {user.email.split('@')[0]}
+                                </div>
+                            </div>
+                            <div className="text-yellow-400 font-mono text-xs">
+                                <span className="opacity-50">CR:</span> {user.credits?.toLocaleString()}
+                            </div>
+                        </div>
+                        <button onClick={onOpenStore} className="px-6 py-2 border border-yellow-400/30 text-yellow-400 font-bold hover:bg-yellow-400 hover:text-black transition-all clip-cyber-btn text-lg uppercase italic">
+                            $ Store
+                        </button>
+                        <button onClick={onLogout} className="px-4 py-2 border border-red-500/30 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all clip-cyber-btn text-xs uppercase">
+                            Logout
+                        </button>
+                    </>
+                ) : (
+                    <button onClick={() => netlifyIdentity.open()} className="px-8 py-3 bg-cyan-400 text-black font-black hover:bg-white transition-all clip-cyber-btn text-lg uppercase italic">
+                        Initialize Identity
+                    </button>
+                )}
+            </div>
+        </nav>
     );
 };
 
 // ==========================================
-// STORE COMPONENT
+// 3. COMPONENT: STORE MODAL
 // ==========================================
 const CyberStore = ({ onClose, user }) => {
     const [loadingItem, setLoadingItem] = useState(null);
+    const [donationAmount, setDonationAmount] = useState(10);
 
-    const buyItem = async (itemName) => {
-        if (!user?.token) return alert("LOGIN REQUIRED FOR TRANSACTIONS");
-        
-        setLoadingItem(itemName);
+    const initiateCheckout = async (itemConfig) => {
+        if (!user) return netlifyIdentity.open();
+        setLoadingItem(itemConfig.id);
+
         try {
-            const response = await fetch('/.netlify/functions/create_checkout', { 
+            const response = await fetch('/.netlify/functions/create_checkout', {
                 method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    authorization: `Bearer ${user.token}`
-                },
-                body: JSON.stringify({ itemName })
+                body: JSON.stringify({
+                    type: itemConfig.type,
+                    amount: itemConfig.amount || donationAmount,
+                    tier: itemConfig.tier || null,
+                    userId: user.id
+                })
             });
             const { url } = await response.json();
-            if(url) window.location.href = url;
-            else alert("Connection Error");
+            if (url) window.location.href = url;
         } catch (err) {
-            console.error(err);
-            alert("Transaction Failed");
+            alert("Secure Link Failure: " + err.message);
             setLoadingItem(null);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-            <div className="max-w-4xl w-full bg-cyber-black border border-cyber-cyan p-8 clip-cyber relative">
-                <button onClick={onClose} className="absolute top-4 right-4 text-cyber-pink font-bold hover:text-white">[X] CLOSE</button>
-                <h2 className="text-4xl font-orbitron font-black text-white mb-2 text-center">CYBER <span className="text-cyber-yellow">MARKET</span></h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                    {/* CREDITS */}
-                    <div className="bg-white/5 p-6 border border-white/10 hover:border-cyber-cyan transition-all group">
-                        <div className="h-24 bg-cyan-900/30 mb-4 flex items-center justify-center text-4xl">💎</div>
-                        <h3 className="text-xl font-bold text-white mb-2">5000 CREDITS</h3>
-                        <button onClick={() => buyItem(STORE_ITEMS.CREDITS_5000)} disabled={!!loadingItem} className="w-full py-3 bg-cyber-cyan text-black font-bold uppercase hover:bg-white clip-cyber-btn">
-                            {loadingItem === 'credits_5000' ? '...' : 'BUY $4.99'}
-                        </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4 overflow-y-auto">
+            <div className="max-w-5xl w-full bg-black border border-cyan-400 p-8 clip-cyber relative my-8">
+                <button onClick={onClose} className="absolute top-4 right-4 text-pink-500 font-bold hover:text-white uppercase">[X] Close</button>
+                <h2 className="text-4xl font-orbitron font-black text-white mb-8 text-center uppercase italic">System <span className="text-yellow-400">Market</span></h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {Object.values(STORE_ITEMS).map(item => (
+                        <div key={item.id} className="bg-gray-900/50 p-6 border border-white/10 hover:border-cyan-400 transition-all flex flex-col items-center">
+                            <div className="text-4xl mb-4">{item.icon}</div>
+                            <h3 className={`font-bold mb-1 ${item.color}`}>{item.label}</h3>
+                            <p className="text-xs text-gray-500 mb-6 font-mono">${item.price}.00 USD</p>
+                            <button 
+                                onClick={() => initiateCheckout(item)} 
+                                disabled={!!loadingItem}
+                                className="w-full py-2 bg-white text-black font-black uppercase clip-cyber-btn hover:bg-cyan-400 transition-colors"
+                            >
+                                {loadingItem === item.id ? "SYNCING..." : "PURCHASE"}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Direct Donation Section */}
+                <div className="mt-8 p-6 border border-pink-500/20 bg-pink-500/5 clip-cyber flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-pink-500 font-orbitron">DIRECT DONATION</h3>
+                        <p className="text-xs text-gray-400 uppercase tracking-tighter">Support the grid. Any amount translates to credits ($1 = 1000 CR).</p>
                     </div>
-                    {/* SKIN */}
-                    <div className="bg-white/5 p-6 border border-white/10 hover:border-cyber-yellow transition-all group">
-                        <div className="h-24 bg-yellow-900/30 mb-4 flex items-center justify-center text-4xl">👑</div>
-                        <h3 className="text-xl font-bold text-white mb-2">GOLDEN SKIN</h3>
-                        <button onClick={() => buyItem(STORE_ITEMS.GOLDEN_SKIN)} disabled={!!loadingItem} className="w-full py-3 bg-cyber-yellow text-black font-bold uppercase hover:bg-white clip-cyber-btn">
-                            {loadingItem === 'golden_skin' ? '...' : 'BUY $9.99'}
-                        </button>
-                    </div>
-                    {/* BADGE */}
-                    <div className="bg-white/5 p-6 border border-white/10 hover:border-cyber-pink transition-all group">
-                        <div className="h-24 bg-pink-900/30 mb-4 flex items-center justify-center text-4xl">🚀</div>
-                        <h3 className="text-xl font-bold text-white mb-2">SUPPORTER</h3>
-                        <button onClick={() => buyItem(STORE_ITEMS.SUPPORTER_BADGE)} disabled={!!loadingItem} className="w-full py-3 bg-cyber-pink text-black font-bold uppercase hover:bg-white clip-cyber-btn">
-                            {loadingItem === 'supporter_badge' ? '...' : 'BUY $2.99'}
+                    <div className="flex gap-4 w-full md:w-auto">
+                        <input 
+                            type="number" 
+                            value={donationAmount} 
+                            onChange={(e) => setDonationAmount(e.target.value)}
+                            className="bg-black border border-pink-500 p-2 text-white w-24 text-center font-mono"
+                        />
+                        <button 
+                            onClick={() => initiateCheckout({ id: 'donation', type: 'donation' })}
+                            className="px-8 py-2 bg-pink-500 text-black font-black clip-cyber-btn hover:bg-white transition-all uppercase"
+                        >
+                            Donate
                         </button>
                     </div>
                 </div>
@@ -120,211 +146,93 @@ const CyberStore = ({ onClose, user }) => {
 };
 
 // ==========================================
-// NAVIGATION
-// ==========================================
-const NavBar = ({ user, onOpenStore, onOpenAuth, onLogout }) => (
-    <nav className="flex justify-between items-center px-8 py-6 sticky top-0 z-40 bg-cyber-black/80 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center gap-2 group cursor-pointer">
-            <div className="w-8 h-8 bg-cyber-cyan clip-cyber-btn animate-pulse"></div>
-            <div className="font-orbitron font-black text-2xl tracking-widest text-white group-hover:text-cyber-cyan transition-colors">
-                NEON<span className="text-cyber-pink">PULSE</span>
-            </div>
-        </div>
-        <div className="flex gap-4 items-center">
-            {user ? (
-                <>
-                    <div className="text-right mr-4 hidden md:block">
-                        <div className="text-cyber-cyan font-bold font-orbitron tracking-widest text-sm">{user.username}</div>
-                        <div className="text-cyber-yellow font-mono text-xs">CR: {user.credits}</div>
-                    </div>
-                    <button onClick={onOpenStore} className="px-6 py-2 border border-cyber-yellow/30 text-cyber-yellow font-rajdhani font-bold hover:bg-cyber-yellow hover:text-black transition-all clip-cyber-btn text-lg">
-                        $ STORE
-                    </button>
-                    <button onClick={onLogout} className="px-4 py-2 border border-red-500/30 text-red-500 font-rajdhani font-bold hover:bg-red-500 hover:text-white transition-all clip-cyber-btn text-sm">
-                        LOGOUT
-                    </button>
-                </>
-            ) : (
-                <>
-                    <button onClick={() => onOpenAuth('login')} className="px-6 py-2 border border-cyber-cyan/30 text-cyber-cyan font-rajdhani font-bold hover:bg-cyber-cyan hover:text-black transition-all clip-cyber-btn text-lg">
-                        LOGIN
-                    </button>
-                    <button onClick={() => onOpenAuth('signup')} className="px-6 py-2 border border-cyber-pink/30 text-cyber-pink font-rajdhani font-bold hover:bg-cyber-pink hover:text-black transition-all clip-cyber-btn text-lg">
-                        REGISTER
-                    </button>
-                </>
-            )}
-        </div>
-    </nav>
-);
-
-// ==========================================
-// MAIN APP
+// 4. MAIN APP LOGIC
 // ==========================================
 const App = () => {
     const [view, setView] = useState('home');
     const [user, setUser] = useState(null);
     const [showStore, setShowStore] = useState(false);
-    const [auth0Client, setAuth0Client] = useState(null);
-    const [auth0Config, setAuth0Config] = useState(null);
-    const [authError, setAuthError] = useState("");
 
-    // Initial Load & Auth Check
     useEffect(() => {
-        let cancelled = false;
+        // Initialize Netlify Identity
+        netlifyIdentity.on("init", user => syncUser(user));
+        netlifyIdentity.on("login", user => { syncUser(user); netlifyIdentity.close(); });
+        netlifyIdentity.on("logout", () => { setUser(null); setView('home'); });
 
-        const init = async () => {
-            setAuthError("");
-            try {
-                const res = await fetch('/.netlify/functions/auth0_config', { cache: 'no-store' });
-                const cfg = await res.json();
-                if (!res.ok) throw new Error(cfg?.error || 'Auth0 config error');
-                if (cancelled) return;
-
-                setAuth0Config(cfg);
-
-                const client = await createAuth0Client({
-                    domain: cfg.domain,
-                    clientId: cfg.clientId,
-                    cacheLocation: 'localstorage',
-                    useRefreshTokens: true,
-                    authorizationParams: {
-                        redirect_uri: window.location.origin,
-                        scope: 'openid profile email offline_access',
-                        ...(cfg.audience ? { audience: cfg.audience } : {})
-                    }
-                });
-
-                if (cancelled) return;
-                setAuth0Client(client);
-
-                const qs = window.location.search;
-                const isCallback = qs.includes('code=') && qs.includes('state=');
-                if (isCallback) {
-                    await client.handleRedirectCallback();
-                    window.history.replaceState({}, document.title, "/");
-                }
-
-                const authed = await client.isAuthenticated();
-                if (!authed) return;
-
-                const profile = await client.getUser();
-                const token = cfg.audience
-                    ? await client.getTokenSilently()
-                    : (await client.getIdTokenClaims())?.__raw;
-                if (!token) throw new Error('Unable to obtain a session token');
-
-                const userRes = await fetch('/.netlify/functions/get_user', {
-                    method: 'POST',
-                    headers: {
-                        'content-type': 'application/json',
-                        authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        email: profile?.email || null,
-                        username: profile?.nickname || profile?.name || null
-                    })
-                });
-
-                const userData = await userRes.json();
-                if (!userRes.ok) throw new Error(userData?.error || 'Failed to load user');
-                if (cancelled) return;
-                setUser({ ...userData, token });
-            } catch (e) {
-                if (!cancelled) setAuthError(e?.message || 'Auth error');
-            }
-
-            // Handle Payment Success
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('success') === 'true') {
-                alert(`PAYMENT SUCCESSFUL: ${params.get('item')}`);
-                window.history.replaceState({}, document.title, "/");
-            }
-        };
-
-        init();
-        return () => {
-            cancelled = true;
-        };
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('payment') === 'success') {
+            alert("TRANSACTION VERIFIED. ASSETS INJECTED.");
+            window.history.replaceState({}, document.title, "/");
+        }
     }, []);
 
-    const handleLogout = () => {
-        setUser(null);
-        setView('home');
-        setAuthError("");
-        if (auth0Client) {
-            auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+    const syncUser = async (netlifyUser) => {
+        if (!netlifyUser) return;
+        try {
+            const token = await netlifyUser.jwt();
+            const res = await fetch('/.netlify/functions/get_user_profile', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const dbData = await res.json();
+            setUser({ ...netlifyUser, ...dbData });
+        } catch (err) {
+            console.error("Sync Error:", err);
+            setUser(netlifyUser); // Basic fallback
         }
-    };
-
-    const handleAuthRedirect = async (mode) => {
-        if (!auth0Client || !auth0Config) {
-            setAuthError("Auth system is still initializing.");
-            return;
-        }
-        setAuthError("");
-        const isSignup = mode === 'signup';
-        await auth0Client.loginWithRedirect({
-            authorizationParams: {
-                redirect_uri: window.location.origin,
-                scope: 'openid profile email offline_access',
-                ...(auth0Config.audience ? { audience: auth0Config.audience } : {}),
-                ...(isSignup ? { screen_hint: 'signup' } : {})
-            }
-        });
     };
 
     if (view === 'neon_storm') {
-        return <NeonStormGame onExit={() => setView('home')} />;
+        return <NeonStormGame onExit={() => setView('home')} user={user} />;
     }
 
     return (
-        <div className="min-h-screen flex flex-col relative z-10">
+        <div className="min-h-screen flex flex-col bg-black text-white">
             <NavBar 
                 user={user} 
-                onOpenAuth={handleAuthRedirect}
                 onOpenStore={() => setShowStore(true)}
-                onLogout={handleLogout}
+                onLogout={() => netlifyIdentity.logout()}
             />
-            
-            {showStore && <CyberStore onClose={() => setShowStore(false)} user={user} />}
-            <AuthStatusBanner error={authError} />
-            
-            <div className="relative pt-24 pb-20 px-6 text-center overflow-hidden">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyber-pink/20 blur-[150px] rounded-full pointer-events-none" />
-                <h1 className="relative text-7xl md:text-9xl font-black font-orbitron mb-2 animate-glitch tracking-tighter">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan via-white to-cyber-cyan">NEON PULSE</span>
-                </h1>
-                <p className="font-rajdhani font-bold text-cyber-pink tracking-[0.5em] text-sm md:text-xl mb-8 uppercase">System Online // Ready for Input</p>
-            </div>
 
-            <div className="max-w-7xl mx-auto px-6 mb-24 relative z-10">
-                <div className="relative group clip-cyber border border-cyber-cyan/30 bg-cyber-dark p-8 md:p-16 flex flex-col items-start gap-6">
-                    <h2 className="text-5xl md:text-7xl font-black font-orbitron text-white">NEON STORM</h2>
-                    <p className="text-xl text-gray-300 max-w-xl font-rajdhani">Defeat Ancient Gods in this high-speed cyber-aztec bullet hell.</p>
-                    <button onClick={() => setView('neon_storm')} className="bg-cyber-cyan text-black font-black px-10 py-4 clip-cyber-btn font-orbitron text-xl hover:bg-white transition-all">
-                        INITIALIZE
+            {showStore && <CyberStore onClose={() => setShowStore(false)} user={user} />}
+
+            {/* HERO SECTION */}
+            <header className="relative pt-32 pb-20 px-6 text-center">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 blur-[120px] rounded-full pointer-events-none" />
+                <h1 className="relative text-7xl md:text-9xl font-black font-orbitron mb-4 italic uppercase tracking-tighter">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-white to-cyan-400">Neon Pulse</span>
+                </h1>
+                <p className="font-bold text-pink-500 tracking-[0.6em] text-xs md:text-sm mb-12 uppercase">Grid Connection: Stable // Protocols: Active</p>
+                
+                <div className="max-w-4xl mx-auto bg-gray-900/40 border border-cyan-500/20 p-8 clip-cyber flex flex-col md:flex-row items-center gap-8 backdrop-blur-md">
+                    <div className="flex-1 text-left">
+                        <h2 className="text-4xl font-black font-orbitron mb-2 uppercase italic text-white">Neon Storm</h2>
+                        <p className="text-gray-400 font-rajdhani text-lg">Ancient AI Gods have awakened. Pilot your Nagual craft and pierce the digital veil.</p>
+                    </div>
+                    <button onClick={() => setView('neon_storm')} className="px-12 py-5 bg-cyan-400 text-black font-black font-orbitron text-xl clip-cyber-btn hover:bg-white transition-all uppercase italic">
+                        Initialize
                     </button>
                 </div>
-            </div>
-            
-            {/* OTHER GAMES GRID (Static for now) */}
-            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-                {GAMES_DB.slice(1).map(game => (
-                    <div key={game.id} className="group relative bg-cyber-dark clip-cyber border border-white/10 hover:border-cyber-cyan transition-all p-6 opacity-60 hover:opacity-100">
-                        <h3 className="text-2xl font-black font-orbitron mb-2 text-white">{game.title}</h3>
-                        <p className="text-sm text-gray-400 font-rajdhani">{game.desc}</p>
-                        <div className="mt-4 text-xs font-bold text-cyber-pink border border-cyber-pink/30 px-2 py-1 inline-block">{game.badge}</div>
-                    </div>
-                ))}
-            </div>
+            </header>
 
-            <footer className="border-t border-cyber-cyan/20 mt-auto bg-cyber-black py-12 text-center text-gray-500 font-mono text-xs">
-                SYSTEM VERSION 2.4.0 // GRID ONLINE
+            {/* UPCOMING GAMES */}
+            <section className="max-w-7xl mx-auto px-8 py-20 w-full grid grid-cols-1 md:grid-cols-2 gap-8 opacity-50">
+                <div className="border border-white/10 p-8 clip-cyber bg-gray-900/20">
+                    <h3 className="font-orbitron font-bold text-xl mb-2 text-gray-500 uppercase italic">Cyber Chess 2099</h3>
+                    <p className="text-xs font-mono uppercase text-gray-600 tracking-widest">[ Status: Encrypted ]</p>
+                </div>
+                <div className="border border-white/10 p-8 clip-cyber bg-gray-900/20">
+                    <h3 className="font-orbitron font-bold text-xl mb-2 text-gray-500 uppercase italic">Neural Racer</h3>
+                    <p className="text-xs font-mono uppercase text-gray-600 tracking-widest">[ Status: Offline ]</p>
+                </div>
+            </section>
+
+            <footer className="mt-auto py-12 border-t border-white/5 text-center text-[10px] font-mono text-gray-600 tracking-[0.3em] uppercase">
+                System v2.5.1 // Powered by Neon Core // Unauthorized Access Prohibited
             </footer>
         </div>
     );
 };
 
+// Mount the App
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
