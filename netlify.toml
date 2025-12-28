@@ -1,6 +1,8 @@
-﻿[build]
+[build]
   publish = "."
+
 [functions]
   node_bundler = "esbuild"
+
 [identity]
   enable = true
