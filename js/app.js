@@ -227,7 +227,7 @@ const NavBar = ({ user, onOpenStore, onOpenAuth, onLogout }) => (
                 </>
             ) : (
                 <button onClick={onOpenAuth} className="px-6 py-2 border border-cyber-cyan/30 text-cyber-cyan font-rajdhani font-bold hover:bg-cyber-cyan hover:text-black transition-all clip-cyber-btn text-lg">
-                    // LOGIN
+                    LOGIN
                 </button>
             )}
         </div>

@@ -4,6 +4,12 @@ exports.handler = async () => {
     const client = new Client({ connectionString: process.env.DATABASE_URL });
     
     try {
+        // Ensure pgcrypto is available for gen_random_uuid()
+        // This requires the database role to have permission to create extensions.
+        // If you use a managed DB that restricts extensions, switch to uuid_generate_v4()
+        // and enable the "uuid-ossp" extension if needed.
+        await client.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+
         await client.connect();
         
         // 1. Leaderboard Table (Existing)
@@ -30,9 +36,10 @@ exports.handler = async () => {
             );
         `);
 
-        return { statusCode: 200, body: "Database initialized with Users table." };
+        return { statusCode: 200, body: JSON.stringify({ message: "Database initialized with Users table." }) };
     } catch (err) {
-        return { statusCode: 500, body: err.toString() };
+        console.error('init_db error:', err);
+        return { statusCode: 500, body: JSON.stringify({ error: err.toString() }) };
     } finally {
         await client.end();
     }

@@ -40,12 +40,100 @@
 </head>
 <body class="bg-cyber-black text-white overflow-x-hidden selection:bg-cyber-pink selection:text-white">
 
-    <div class="scanlines fixed inset-0 pointer-events-none z-50"></div>
-    
-    <div id="root"></div>
+        <div class="scanlines fixed inset-0 pointer-events-none z-50"></div>
 
-    <script type="text/babel" src="js/games/NeonStorm.js"></script>
-    <script type="text/babel" src="js/app.js"></script>
+        <!-- Main App Root -->
+        <div id="root"></div>
+
+        <!-- Support button (visible in main menu) -->
+        <button id="support-button" class="fixed bottom-6 right-6 bg-cyber-pink text-black px-4 py-2 rounded-lg z-40" onclick="openSupport()">SUPPORT</button>
+
+        <!-- Support modal -->
+        <div id="support-screen" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+            <div class="bg-[#071021] p-6 rounded-lg w-full max-w-2xl mx-4 text-white">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-orbitron">Support Neon Pulse</h2>
+                    <button onclick="closeSupport()" class="text-cyber-cyan">Close</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 border border-gray-700 rounded-md">
+                        <h3 class="font-semibold">Tier 1 — Initiate</h3>
+                        <p class="text-sm">1 month ad-free + VOID skin</p>
+                        <p class="mt-2 font-bold">$2</p>
+                        <button class="mt-3 bg-cyber-cyan text-black px-3 py-1 rounded" onclick="buySupporter(1)">Buy</button>
+                    </div>
+                    <div class="p-4 border border-gray-700 rounded-md">
+                        <h3 class="font-semibold">Tier 2 — Veteran</h3>
+                        <p class="text-sm">1 year ad-free + 3 skins</p>
+                        <p class="mt-2 font-bold">$20</p>
+                        <button class="mt-3 bg-cyber-cyan text-black px-3 py-1 rounded" onclick="buySupporter(2)">Buy</button>
+                    </div>
+                    <div class="p-4 border border-gray-700 rounded-md">
+                        <h3 class="font-semibold">Tier 3 — Legend</h3>
+                        <p class="text-sm">Lifetime ad-free + all skins</p>
+                        <p class="mt-2 font-bold">$50</p>
+                        <button class="mt-3 bg-cyber-cyan text-black px-3 py-1 rounded" onclick="buySupporter(3)">Buy</button>
+                    </div>
+                </div>
+
+                <hr class="my-4 border-gray-700" />
+
+                <div>
+                    <h4 class="font-semibold mb-2">Donation</h4>
+                    <div class="flex gap-2">
+                        <input id="donation-amount" type="number" min="5" placeholder="Amount (USD)" class="p-2 rounded bg-gray-900" />
+                        <button class="bg-cyber-cyan text-black px-3 py-1 rounded" onclick="makeDonation()">Donate</button>
+                    </div>
+                    <p class="text-xs mt-2 text-gray-400">Minimum donation: $5</p>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/babel" src="js/games/NeonStorm.js"></script>
+        <script type="text/babel" src="js/app.js"></script>
+
+        <!-- Support helper scripts -->
+        <script>
+            function openSupport() {
+                document.getElementById('support-screen').classList.remove('hidden');
+                document.getElementById('support-screen').classList.add('flex');
+            }
+            function closeSupport() {
+                document.getElementById('support-screen').classList.add('hidden');
+                document.getElementById('support-screen').classList.remove('flex');
+            }
+
+            async function buySupporter(tier) {
+                try {
+                    const payload = { type: 'tier', tier: tier, userId: window.__USER_ID || null };
+                    const res = await fetch('/.netlify/functions/create_checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (json.url) window.location.href = json.url;
+                    else alert('Failed to create checkout');
+                } catch (err) { console.error(err); alert('Error creating checkout'); }
+            }
+
+            async function makeDonation() {
+                const amount = parseFloat(document.getElementById('donation-amount').value);
+                if (isNaN(amount) || amount < 5) { alert('Minimum donation is $5'); return; }
+                try {
+                    const payload = { type: 'donation', amount: amount, userId: window.__USER_ID || null };
+                    const res = await fetch('/.netlify/functions/create_checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (json.url) window.location.href = json.url;
+                    else alert('Failed to create checkout');
+                } catch (err) { console.error(err); alert('Error creating checkout'); }
+            }
+        </script>
 
 </body>
 </html>
