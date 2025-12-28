@@ -27,7 +27,7 @@ const getRank = (combo) => {
     if (combo >= 60) return { label: 'B', color: '#ffd700', shadow: '#ffd700' };   
     if (combo >= 30) return { label: 'C', color: '#00aa55', shadow: '#00aa55' };   
     if (combo >= 15) return { label: 'D', color: '#00ffcc', shadow: '#00ffcc' };   
-    return { label: 'E', color: '#555555', shadow: '#000000' };                    
+    return { label: 'E', color: '#555555', shadow: '#000000' };                     
 };
 
 // ==========================================
@@ -52,8 +52,12 @@ window.NeonStormGame = ({ onExit }) => {
     const [showStory, setShowStory] = useState(false);
     const [showTips, setShowTips] = useState(false);
     
-    // Player Profile State (Transient - Awaiting Backend Props)
-    const [credits, setCredits] = useState(100000); 
+    // Player Profile State (UPDATED: Defaults to 0, syncs with LocalStorage)
+    const [credits, setCredits] = useState(() => {
+        const saved = localStorage.getItem('credits');
+        return saved ? parseInt(saved, 10) : 0; 
+    });
+    
     const [unlockedThemes, setUnlockedThemes] = useState(['NEON']);
     const [activeTheme, setActiveTheme] = useState(THEMES.NEON);
 
@@ -87,6 +91,9 @@ window.NeonStormGame = ({ onExit }) => {
     useEffect(() => { activeThemeRef.current = activeTheme; }, [activeTheme]);
     useEffect(() => { isHangarOpenRef.current = showHangar || showStory || showTips; }, [showHangar, showStory, showTips]);
     useEffect(() => { isMusicEnabledRef.current = isMusicEnabled; }, [isMusicEnabled]);
+    
+    // UPDATED: Sync Credits to LocalStorage when they change (e.g. spending on themes)
+    useEffect(() => { localStorage.setItem('credits', credits); }, [credits]);
 
     // --- API CALLS ---
     const fetchLeaderboard = async () => {
@@ -634,7 +641,6 @@ window.NeonStormGame = ({ onExit }) => {
         s.score = 0; s.powerUpLevel = 0; s.powerUpEndTime = 0; s.bossCooldown = 0;
         
         s.lastEnemySpawn = 0;
-        setBossActive(false);
 
         setGameOver(false);
         setGameStarted(true);
