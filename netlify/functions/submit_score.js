@@ -1,96 +1,44 @@
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
-  // 1. SECURITY: Only allow POST requests
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
-  // 2. SECURITY: Check for Netlify Identity User
-  // Netlify automatically decodes the JWT and puts the user info here.
   const { user } = context.clientContext;
-  
-  if (!user) {
-    return { statusCode: 401, body: 'You must be logged in to save scores.' };
-  }
+  if (!user) return { statusCode: 401, body: "Unauthorized" };
 
-  const { sub: userId, email } = user;
-  
-  // Parse the incoming data
-  let body;
-  try {
-    body = JSON.parse(event.body);
-  } catch (e) {
-    return { statusCode: 400, body: 'Invalid JSON' };
-  }
-
-  const { gameId, score } = body;
-
-  // 3. VALIDATION: Basic sanity checks
-  if (!gameId || typeof score !== 'number') {
-    return { statusCode: 400, body: 'Missing gameId or score' };
-  }
-
-  // Connect to Neon Database
+  const { gameId, score } = JSON.parse(event.body);
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false } // Required for Neon
+    ssl: { rejectUnauthorized: false }
   });
 
   try {
     await client.connect();
 
-    // 4. LAZY SYNC: Ensure user exists in our DB
-    // We use ON CONFLICT to do nothing if they already exist.
-    // This removes the need for a separate registration flow.
-    const syncUserQuery = `
-      INSERT INTO users (user_id, email)
-      VALUES ($1, $2)
-      ON CONFLICT (user_id) DO UPDATE 
-      SET email = EXCLUDED.email; -- Update email if it changed in Google/Netlify
-    `;
-    await client.query(syncUserQuery, [userId, email]);
+    // 1. Save the score
+    await client.query(
+      'INSERT INTO scores (game_id, user_id, score) VALUES ($1, $2, $3)',
+      [gameId, user.sub, score]
+    );
 
-    // 5. SUBMIT SCORE
-    // We insert the score. Since 'gameId' is a Foreign Key, 
-    // this will fail automatically if you send a fake game ID.
-    const insertScoreQuery = `
-      INSERT INTO scores (user_id, game_id, score, metadata)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, created_at;
-    `;
-    
-    // Optional: Add metadata like timestamp to catch impossible speed-runs later
-    const metadata = {
-        submitted_at: new Date().toISOString(),
-        platform: 'web',
-        context: 'standard_play'
-    };
+    // 2. ACHIEVEMENT LOGIC: "First Blood"
+    // Grant 500 bonus credits for the first time someone submits a score
+    const achievementCheck = await client.query(
+      'INSERT INTO achievements (user_id, game_id, achievement_key) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING id',
+      [user.sub, gameId, 'first_score']
+    );
 
-    const result = await client.query(insertScoreQuery, [userId, gameId, score, metadata]);
-
-    await client.end();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: 'Score saved successfully!',
-        scoreId: result.rows[0].id
-      }),
-    };
-
-  } catch (error) {
-    console.error('Database Error:', error);
-    await client.end();
-
-    // Handle specific errors nicely
-    if (error.code === '23503') { // Postgres Foreign Key Violation (e.g., bad game_id)
-        return { statusCode: 400, body: 'Invalid Game ID. Check your game config.' };
+    if (achievementCheck.rows.length > 0) {
+      await client.query(
+        'UPDATE users SET credits = credits + 500 WHERE user_id = $1',
+        [user.sub]
+      );
+      console.log(`Achievement Unlocked: First Score for ${user.sub}`);
     }
 
-    return {
-      statusCode: 500,
-      body: 'Internal Server Error',
-    };
+    await client.end();
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+  } catch (err) {
+    console.error(err);
+    if (client) await client.end();
+    return { statusCode: 500, body: "Score submission failed." };
   }
 };
