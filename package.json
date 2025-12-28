@@ -9,13 +9,13 @@
     "init-db": "node scripts/init_db_run.js"
   },
   "dependencies": {
-    "pg": "^8.11.3",
     "stripe": "^14.14.0",
     "@netlify/neon": "^0.1.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "netlify-cli": "^17.10.1"
+    "esbuild": "^0.25.0",
+    "netlify-cli": "^23.13.0"
   }
 }

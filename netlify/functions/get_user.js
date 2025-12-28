@@ -1,13 +1,10 @@
-const { Client } = require('pg');
 const { verifyAuth0Jwt } = require('../utils/auth0');
+const { getSql } = require('../utils/db');
 
 exports.handler = async (event) => {
-    let client = null;
     try {
         const decoded = await verifyAuth0Jwt(event);
-        client = new Client({ connectionString: process.env.DATABASE_URL });
-        
-        await client.connect();
+        const sql = getSql();
         const auth0Sub = decoded?.sub;
         if (!auth0Sub) {
             return { statusCode: 401, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ error: "Invalid token" }) };
@@ -23,16 +20,16 @@ exports.handler = async (event) => {
         const email = body.email || null;
         const requestedUsername = body.username || body.nickname || null;
 
-        const existing = await client.query(
+        const existingRows = await sql(
             'SELECT id, username, credits, inventory FROM users WHERE auth0_sub = $1',
             [auth0Sub]
         );
 
-        if (existing.rows.length > 0) {
+        if (existingRows.length > 0) {
             return {
                 statusCode: 200,
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify(existing.rows[0])
+                body: JSON.stringify(existingRows[0])
             };
         }
 
@@ -56,13 +53,13 @@ exports.handler = async (event) => {
             const username = `${baseUsername}${suffix}`.slice(0, 50);
 
             try {
-                const result = await client.query(
+                const rows = await sql(
                     `INSERT INTO users (auth0_sub, username, email, credits, inventory)
                      VALUES ($1, $2, $3, 1000, '["NEON"]'::jsonb)
                      RETURNING id, username, credits, inventory`,
                     [auth0Sub, username, email]
                 );
-                inserted = result.rows[0];
+                inserted = rows[0];
                 break;
             } catch (e) {
                 // Unique constraint collision; retry with suffix.
@@ -92,8 +89,6 @@ exports.handler = async (event) => {
             body: JSON.stringify({ error: statusCode === 401 ? 'Unauthorized' : 'Server Error' })
         };
     } finally {
-        if (client) {
-            await client.end().catch(() => {});
-        }
+        // No-op: @netlify/neon manages connections internally.
     }
 };

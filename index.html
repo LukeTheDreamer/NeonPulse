@@ -1,215 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON STORM - Official Site</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Rajdhani', sans-serif; background-color: #050505; overflow: hidden; user-select: none; }
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .clip-cyber { clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%); }
-        .clip-cyber-btn { clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #00f3ff; }
-        canvas { image-rendering: pixelated; }
-    </style>
-</head>
-<body class="text-white h-screen w-screen flex items-center justify-center bg-black">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Pulse Arcade</title>
 
-    <div id="game-container" class="relative w-[800px] h-[600px] bg-black shadow-[0_0_80px_rgba(0,243,255,0.15)] border border-cyan-500/20">
-        
-        <canvas id="gameCanvas" width="800" height="600" class="block w-full h-full"></canvas>
-
-        <div id="ui-layer" class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between hidden">
-            <div class="flex justify-between items-start w-full">
-                <button id="btn-return" class="pointer-events-auto text-cyan-400 bg-black/50 border border-cyan-400/30 px-4 py-2 clip-cyber-btn hover:bg-cyan-400/20">« ABORT</button>
-                <div class="text-right bg-black/40 p-4 border border-cyan-400/20 clip-cyber-btn">
-                    <p class="text-4xl font-black text-white font-mono" id="hud-score">0</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="menu-screen" class="absolute inset-0 z-30 flex items-center justify-center bg-[#050505]/95 backdrop-blur-xl p-8">
-            <div class="max-w-4xl w-full flex flex-col items-center clip-cyber border border-cyan-400/30 p-8 bg-black/80">
-                <h1 class="text-6xl font-black text-cyan-400 mb-2 italic uppercase font-orbitron tracking-tighter">NEON STORM</h1>
-                <p class="text-pink-500 font-mono tracking-[0.5em] mb-8 text-xs">OFFICIAL RELEASE v1.0</p>
-
-                <div class="w-full flex gap-4 mb-8">
-                     <div class="flex-1 bg-black/40 p-6 border border-white/10 relative text-center">
-                        <p class="text-white/50 text-xs uppercase tracking-[0.2em]">High Score</p>
-                        <p id="menu-score" class="text-5xl font-black text-white font-mono">0</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 w-full justify-center">
-                    <button id="btn-shop" class="bg-white/10 hover:bg-white/20 text-cyan-400 font-bold py-4 px-6 text-lg uppercase clip-cyber-btn tracking-widest border border-cyan-400/50 flex-1">HANGAR</button>
-                    <button id="btn-support" class="bg-pink-500/10 hover:bg-pink-500/20 text-pink-500 font-bold py-4 px-6 text-lg uppercase clip-cyber-btn tracking-widest border border-pink-500/50 flex-1">SUPPORT</button>
-                    <button id="btn-start" class="bg-white hover:bg-cyan-400 hover:text-black text-black font-black py-4 px-12 text-xl uppercase clip-cyber-btn tracking-widest transform hover:scale-105 transition-transform flex-[2]">INITIATE</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="support-screen" class="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center hidden">
-            <div class="max-w-5xl w-full h-full p-8 overflow-y-auto custom-scrollbar">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-4xl font-black text-white font-orbitron">SUPPORTER <span class="text-pink-500">PROGRAM</span></h2>
-                    <button id="btn-close-support" class="text-cyan-500 hover:text-white font-mono">[X] CLOSE</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-rajdhani mb-8">
-                    <div class="bg-gray-900 border border-cyan-500/30 p-6 flex flex-col items-center text-center clip-cyber hover:border-cyan-400 transition-all">
-                        <h3 class="text-2xl font-black text-cyan-400 font-orbitron mb-2">INITIATE</h3>
-                        <div class="text-4xl font-bold text-white mb-4">$30</div>
-                        <button onclick="buySupporter(1)" class="w-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold py-3 uppercase clip-cyber-btn">SUPPORT</button>
-                    </div>
-                    <div class="bg-gray-900 border border-pink-500/30 p-6 flex flex-col items-center text-center clip-cyber transform hover:-translate-y-2 hover:border-pink-500 transition-all shadow-[0_0_30px_rgba(236,72,153,0.1)]">
-                        <h3 class="text-2xl font-black text-pink-500 font-orbitron mb-2">VETERAN</h3>
-                        <div class="text-4xl font-bold text-white mb-4">$90</div>
-                        <button onclick="buySupporter(2)" class="w-full bg-pink-500 text-white hover:bg-pink-400 font-bold py-3 uppercase clip-cyber-btn">SUPPORT</button>
-                    </div>
-                    <div class="bg-gray-900 border border-yellow-400/30 p-6 flex flex-col items-center text-center clip-cyber hover:border-yellow-400 transition-all">
-                        <h3 class="text-2xl font-black text-yellow-400 font-orbitron mb-2">LEGEND</h3>
-                        <div class="text-4xl font-bold text-white mb-4">$500</div>
-                        <button onclick="buySupporter(3)" class="w-full bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400 hover:text-black font-bold py-3 uppercase clip-cyber-btn">SUPPORT</button>
-                    </div>
-                </div>
-                <div class="max-w-lg mx-auto bg-black/80 border border-white/20 p-6 clip-cyber text-center">
-                    <h3 class="text-xl font-bold text-white mb-2 font-orbitron">DIRECT DONATION</h3>
-                    <div class="flex items-center justify-center gap-4 mb-4">
-                        <span class="text-2xl text-cyan-400 font-bold">$</span>
-                        <input type="number" id="donation-amount" value="5" min="5" step="1" class="bg-transparent border-b-2 border-cyan-500 text-3xl font-bold text-white w-24 text-center focus:outline-none focus:border-white transition-colors" onchange="if(this.value<5)this.value=5">
-                    </div>
-                    <button onclick="makeDonation()" class="w-full bg-white text-black hover:bg-cyan-400 font-bold py-3 uppercase clip-cyber-btn tracking-widest transition-all">DONATE NOW</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="shop-screen" class="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex items-center justify-center hidden">
-            <div class="max-w-4xl w-full bg-black border border-cyan-500 p-8 clip-cyber relative">
-                <button id="btn-close-shop" class="absolute top-4 right-4 text-cyan-500 hover:text-white">[X] CLOSE</button>
-                <h2 class="text-4xl font-black text-white mb-6 text-center font-orbitron">HANGAR</h2>
-                <div id="theme-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-            </div>
-        </div>
-    </div>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
 
     <script>
-        // --- GAME LOGIC ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const uiLayer = document.getElementById('ui-layer');
-        const menuScreen = document.getElementById('menu-screen');
-        const shopScreen = document.getElementById('shop-screen');
-        const supportScreen = document.getElementById('support-screen');
-        const elScore = document.getElementById('hud-score');
-
-        // State
-        let isGameActive = false;
-        let score = 0;
-        let player = { x: 375, y: 500, speed: 8 };
-        let bullets = [];
-        let enemies = [];
-        let keys = {};
-        
-        // --- UI HANDLERS ---
-        document.getElementById('btn-start').onclick = () => {
-            menuScreen.classList.add('hidden');
-            uiLayer.classList.remove('hidden');
-            isGameActive = true;
-            loop();
-        };
-
-        document.getElementById('btn-shop').onclick = () => shopScreen.classList.remove('hidden');
-        document.getElementById('btn-close-shop').onclick = () => shopScreen.classList.add('hidden');
-        document.getElementById('btn-support').onclick = () => supportScreen.classList.remove('hidden');
-        document.getElementById('btn-close-support').onclick = () => supportScreen.classList.add('hidden');
-        document.getElementById('btn-return').onclick = () => location.reload();
-
-        // --- PAYMENT HANDLERS ---
-        const getUserId = () => {
-            let uid = localStorage.getItem('userId');
-            if(!uid) { uid = 'user_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('userId', uid); }
-            return uid;
-        };
-
-        async function buySupporter(tier) {
-            try {
-                const res = await fetch('/.netlify/functions/create_checkout', {
-                    method: 'POST',
-                    body: JSON.stringify({ type: 'tier', tier: tier, userId: getUserId() })
-                });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-            } catch (e) { alert("Error connecting to checkout"); }
-        }
-
-        async function makeDonation() {
-            const amount = document.getElementById('donation-amount').value;
-            try {
-                const res = await fetch('/.netlify/functions/create_checkout', {
-                    method: 'POST',
-                    body: JSON.stringify({ type: 'donation', amount: amount, userId: getUserId() })
-                });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-            } catch (e) { alert("Error connecting to checkout"); }
-        }
-
-        // --- SIMPLE GAME LOOP ---
-        function update() {
-            if(!isGameActive) return;
-            if(keys['a']) player.x -= player.speed;
-            if(keys['d']) player.x += player.speed;
-            
-            // Spawn Enemy Randomly
-            if(Math.random() < 0.02) enemies.push({x: Math.random()*750, y: -50});
-            
-            enemies.forEach(e => e.y += 3);
-            bullets.forEach(b => b.y -= 10);
-            
-            // Collision (Simplified)
-            bullets.forEach((b, bi) => {
-                enemies.forEach((e, ei) => {
-                    if(Math.abs(b.x - e.x) < 30 && Math.abs(b.y - e.y) < 30) {
-                        enemies.splice(ei, 1);
-                        bullets.splice(bi, 1);
-                        score += 100;
-                        elScore.innerText = score;
-                    }
-                });
-            });
-        }
-
-        function draw() {
-            ctx.fillStyle = '#000'; ctx.fillRect(0,0,800,600);
-            
-            // Draw Player
-            ctx.fillStyle = '#00f3ff'; ctx.fillRect(player.x, player.y, 50, 50);
-            
-            // Draw Enemies
-            ctx.fillStyle = '#ff003c'; 
-            enemies.forEach(e => ctx.fillRect(e.x, e.y, 30, 30));
-            
-            // Draw Bullets
-            ctx.fillStyle = '#fff'; 
-            bullets.forEach(b => ctx.fillRect(b.x, b.y, 5, 10));
-        }
-
-        function loop() {
-            update();
-            draw();
-            if(isGameActive) requestAnimationFrame(loop);
-        }
-
-        // Input
-        window.onkeydown = e => {
-            keys[e.key] = true;
-            if(e.key === ' ') bullets.push({x: player.x+22, y: player.y});
-        };
-        window.onkeyup = e => keys[e.key] = false;
-
+      // Tailwind CDN config (no build step); keep in sync with class names in js/app.js + js/games/neonstorm.js.
+      tailwind = {
+        config: {
+          theme: {
+            extend: {
+              colors: {
+                "cyber-black": "#050505",
+                "cyber-dark": "#0b0b14",
+                "cyber-cyan": "#00f3ff",
+                "cyber-pink": "#ff003c",
+                "cyber-yellow": "#ffd700",
+              },
+              fontFamily: {
+                orbitron: ["Orbitron", "sans-serif"],
+                rajdhani: ["Rajdhani", "sans-serif"],
+              },
+            },
+          },
+        },
+      };
     </script>
-</body>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-cyber-black text-white">
+    <div id="root"></div>
+    <div class="scanlines fixed inset-0"></div>
+
+    <script defer src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script defer src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script defer src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+
+    <script defer src="/js/games/neonstorm.js"></script>
+    <script defer src="/js/app.js"></script>
+  </body>
 </html>

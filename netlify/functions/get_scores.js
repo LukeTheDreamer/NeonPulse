@@ -1,4 +1,4 @@
-const { Client } = require('pg');
+const { getSql } = require('../utils/db');
 
 function json(statusCode, body) {
   return {
@@ -14,21 +14,17 @@ exports.handler = async (event) => {
   const rawLimit = event.queryStringParameters?.limit;
   const limit = Math.max(1, Math.min(100, Number.parseInt(rawLimit || '10', 10) || 10));
 
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
-    await client.connect();
-    const result = await client.query(
+    const sql = getSql();
+    const rows = await sql(
       `SELECT username, score, date
        FROM scores
        ORDER BY score DESC, id DESC
        LIMIT $1`,
       [limit],
     );
-    return json(200, result.rows);
+    return json(200, rows);
   } catch (err) {
     return json(500, { error: 'Server Error' });
-  } finally {
-    await client.end().catch(() => {});
   }
 };
-

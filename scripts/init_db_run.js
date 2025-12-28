@@ -1,6 +1,6 @@
 // Simple helper to call local init_db function
 // Usage: INIT_DB_TOKEN=token node scripts/init_db_run.js
-const fetch = require('node-fetch');
+const fetch = globalThis.fetch;
 (async () => {
   const token = process.env.INIT_DB_TOKEN;
   if (!token) return console.error('Please set INIT_DB_TOKEN in environment');

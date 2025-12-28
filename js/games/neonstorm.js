@@ -80,7 +80,8 @@ window.NeonStormGame = ({ onExit }) => {
         boss: null, nextBossScore: 10000, bossLevel: 1, lastBossId: null, bossCooldown: 0,
         keys: {}, lastEnemySpawn: 0, enemySpawnRate: 800, lastPowderSpawn: 0,
         powderSpawnRate: 4000, powerUpEndTime: 0, animationId: null, 
-        lastKillTime: 0, hitStop: 0, currentCombo: 0, frameCount: 0
+        lastKillTime: 0, hitStop: 0, currentCombo: 0, frameCount: 0,
+        lastPlayerShot: 0, playerShotCooldown: 110
     });
 
     // --- SYNC STATE TO REFS ---
@@ -317,6 +318,12 @@ window.NeonStormGame = ({ onExit }) => {
         s.frameCount++;
         const now = Date.now();
         s.stars.forEach(st => { st.y += st.speed; if (st.y > 600) st.y = 0; });
+
+        // Auto-fire while holding SPACE
+        if (s.keys.space && now - s.lastPlayerShot >= s.playerShotCooldown) {
+            s.lastPlayerShot = now;
+            fireBullet();
+        }
 
         // Player Move
         const speedBoost = Math.min(4.5, s.powerUpLevel * 1.5);
@@ -632,6 +639,7 @@ window.NeonStormGame = ({ onExit }) => {
         s.player = { x: 375, y: 500, width: 50, height: 50, speed: 8, lean: 0 };
         s.boss = null; s.nextBossScore = 10000; s.bossLevel = 1; s.lastBossId = null;
         s.score = 0; s.powerUpLevel = 0; s.powerUpEndTime = 0; s.bossCooldown = 0;
+        s.lastPlayerShot = 0;
         
         s.lastEnemySpawn = 0;
         setBossActive(false);
@@ -649,6 +657,16 @@ window.NeonStormGame = ({ onExit }) => {
     useEffect(() => {
         initAudio();
         fetchLeaderboard();
+        const s = gameStateRef.current;
+        if (!s.stars.length) {
+            s.stars = Array.from({ length: 140 }, () => ({
+                x: Math.random() * 800,
+                y: Math.random() * 600,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 2.5 + 0.5,
+                brightness: Math.random() * 0.8 + 0.2,
+            }));
+        }
 
         const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
         document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -656,12 +674,29 @@ window.NeonStormGame = ({ onExit }) => {
         const handleKeyDown = (e) => {
             if (isHangarOpenRef.current || !isGameActiveRef.current) return;
             const key = e.key.toLowerCase();
-            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) e.preventDefault();
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key) || e.code === 'Space') e.preventDefault();
+
+            if (e.code === 'Space') {
+                const s = gameStateRef.current;
+                s.keys.space = true;
+                const now = Date.now();
+                if (now - s.lastPlayerShot >= s.playerShotCooldown) {
+                    s.lastPlayerShot = now;
+                    fireBullet();
+                }
+                return;
+            }
+
             gameStateRef.current.keys[key] = true;
-            if (key === ' ') fireBullet();
         };
 
-        const handleKeyUp = (e) => gameStateRef.current.keys[e.key.toLowerCase()] = false;
+        const handleKeyUp = (e) => {
+            if (e.code === 'Space') {
+                gameStateRef.current.keys.space = false;
+                return;
+            }
+            gameStateRef.current.keys[e.key.toLowerCase()] = false;
+        };
 
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);

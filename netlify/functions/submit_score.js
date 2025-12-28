@@ -1,4 +1,4 @@
-const { Client } = require('pg');
+const { getSql } = require('../utils/db');
 
 function json(statusCode, body) {
   return {
@@ -26,19 +26,16 @@ exports.handler = async (event) => {
   if (username.length > 50) return json(400, { error: 'Username too long' });
   if (score < 0) return json(400, { error: 'Invalid score' });
 
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
-    await client.connect();
-    const result = await client.query(
+    const sql = getSql();
+    const rows = await sql(
       `INSERT INTO scores (username, score)
        VALUES ($1, $2)
        RETURNING id, username, score, date`,
       [username, score],
     );
-    return json(200, result.rows[0]);
+    return json(200, rows[0]);
   } catch (err) {
     return json(500, { error: 'Server Error' });
-  } finally {
-    await client.end().catch(() => {});
   }
 };

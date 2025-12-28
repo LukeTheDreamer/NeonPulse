@@ -1,5 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { Client } = require('pg');
+const { getSql } = require('../utils/db');
 
 function json(statusCode, body) {
   return { statusCode, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) };
@@ -29,38 +29,46 @@ exports.handler = async (event) => {
     const sessionId = session.id;
     const eventId = stripeEvent.id;
 
-    const client = new Client({ connectionString: process.env.DATABASE_URL });
-    await client.connect();
-
     try {
-      // Attempt to insert payment record - unique constraint on stripe_session_id prevents duplicates
-      const insert = await client.query(
-        `INSERT INTO payments (stripe_session_id, stripe_event_id, user_id, amount, metadata) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (stripe_session_id) DO NOTHING RETURNING id`,
-        [sessionId, eventId, null, session.amount_total || null, session.metadata ? JSON.stringify(session.metadata) : null]
-      );
+      const sql = getSql();
+      let wasIdempotent = false;
 
-      if (!insert.rows || insert.rows.length === 0) {
+      await sql.transaction(async (tx) => {
+        // Attempt to insert payment record - unique constraint on stripe_session_id prevents duplicates
+        const inserted = await tx(
+          `INSERT INTO payments (stripe_session_id, stripe_event_id, user_id, amount, metadata)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (stripe_session_id) DO NOTHING
+           RETURNING id`,
+          [sessionId, eventId, null, session.amount_total || null, session.metadata ? JSON.stringify(session.metadata) : null],
+        );
+
+        if (!inserted || inserted.length === 0) {
+          wasIdempotent = true;
+          return;
+        }
+
+        // Process metadata actions
+        const meta = session.metadata || {};
+        if (meta.action === 'supporter_upgrade') {
+          await fulfillSupporterPerks(tx, meta.userId, parseInt(meta.tier));
+        } else if (meta.action === 'donation') {
+          await recordDonation(tx, meta.userId, parseFloat(meta.amount_donated));
+        } else if (meta.item) {
+          // Optional: grant in-game items (store purchases)
+          await grantStoreItem(tx, meta.auth0_sub || null, meta.item);
+        }
+      });
+
+      if (wasIdempotent) {
         console.log(`Session ${sessionId} already processed; ignoring`);
         return json(200, { received: true, idempotent: true });
-      }
-
-      // Process metadata actions
-      const meta = session.metadata || {};
-      if (meta.action === 'supporter_upgrade') {
-        await fulfillSupporterPerks(client, meta.userId, parseInt(meta.tier));
-      } else if (meta.action === 'donation') {
-        await recordDonation(client, meta.userId, parseFloat(meta.amount_donated));
-      } else if (meta.item) {
-        // Optional: grant in-game items (store purchases)
-        await grantStoreItem(client, meta.auth0_sub || null, meta.item);
       }
 
       return json(200, { received: true });
     } catch (err) {
       console.error('Webhook processing failed:', err);
       return json(500, { error: 'Processing Error' });
-    } finally {
-      await client.end();
     }
   }
 
@@ -96,7 +104,7 @@ async function fulfillSupporterPerks(client, userId, tier) {
   }
 
   try {
-    await client.query(`
+    await client(`
       UPDATE users
       SET
         supporter_tier = GREATEST(supporter_tier, $1),
@@ -116,7 +124,7 @@ async function recordDonation(client, userId, amount) {
     return;
   }
   try {
-    await client.query(`UPDATE users SET total_donated = COALESCE(total_donated, 0) + $1 WHERE id = $2`, [amount, userId]);
+    await client(`UPDATE users SET total_donated = COALESCE(total_donated, 0) + $1 WHERE id = $2`, [amount, userId]);
   } catch (err) {
     console.error('recordDonation error:', err.message || err);
   }
@@ -128,7 +136,7 @@ async function grantStoreItem(client, auth0_sub, itemName) {
   try {
     console.log(`Granting item ${itemName} to ${auth0_sub}`);
     // You can implement actual granting logic here, e.g. crediting an account.
-    await client.query(`UPDATE users SET credits = credits + $1 WHERE auth0_sub = $2`, [ itemName === 'credits_5000' ? 5000 : 0, auth0_sub ]);
+    await client(`UPDATE users SET credits = credits + $1 WHERE auth0_sub = $2`, [ itemName === 'credits_5000' ? 5000 : 0, auth0_sub ]);
   } catch (err) {
     console.error('grantStoreItem error:', err.message || err);
   }

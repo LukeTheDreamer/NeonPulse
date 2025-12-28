@@ -76,8 +76,10 @@ Payments:
 
 Production setup (Payments & DB) ✅
 - Add required env vars (see `.env.example`) to your environment or Netlify site settings.
-- Run `npm install` to install dependencies (`stripe`, `pg`, etc.).
-- Initialize DB (local/dev):
+- Run `npm install` to install dependencies (`stripe`, `@netlify/neon`, etc.).
+- Provision Netlify DB (Netlify):
+  - Run `npx netlify db init` (requires `netlify login`) to create the database and set `NETLIFY_DATABASE_URL`.
+- Initialize tables (local/dev/Netlify):
   - Set `INIT_DB_TOKEN` in your env to a secret value.
   - POST an empty request to `/.netlify/functions/init_db` with header `Authorization: Bearer <INIT_DB_TOKEN>` to create tables (scores, users, payments).
 - Start Netlify locally for smoke tests: `npx netlify dev` (it will serve functions locally).

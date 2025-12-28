@@ -1,4 +1,4 @@
-const { Client } = require('pg');
+const { getSql } = require('../utils/db');
 
 function json(statusCode, body) {
     return {
@@ -20,20 +20,18 @@ exports.handler = async (event) => {
     const initToken = process.env.INIT_DB_TOKEN;
     if (!initToken) return json(404, { error: 'Not found' });
     if (getBearerToken(event) !== initToken) return json(401, { error: 'Unauthorized' });
-
-    const client = new Client({ connectionString: process.env.DATABASE_URL });
     
     try {
-        await client.connect();
+        const sql = getSql();
 
         // Ensure pgcrypto is available for gen_random_uuid()
         // This requires the database role to have permission to create extensions.
         // If you use a managed DB that restricts extensions, switch to uuid_generate_v4()
         // and enable the "uuid-ossp" extension if needed.
-        await client.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+        await sql(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
 
         // 1. Leaderboard Table (Existing)
-        await client.query(`
+        await sql(`
             CREATE TABLE IF NOT EXISTS scores (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(50) NOT NULL,
@@ -44,7 +42,7 @@ exports.handler = async (event) => {
 
         // 2. Users Table (NEW)
         // Stores Auth0 identity mapping, credits, and unlocked skins
-        await client.query(`
+        await sql(`
             CREATE TABLE IF NOT EXISTS users (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 auth0_sub TEXT UNIQUE,
@@ -61,7 +59,7 @@ exports.handler = async (event) => {
         `);
 
         // 3. Payments table (used to record webhook-processed sessions and ensure idempotency)
-        await client.query(`
+        await sql(`
             CREATE TABLE IF NOT EXISTS payments (
                 id SERIAL PRIMARY KEY,
                 stripe_session_id TEXT UNIQUE,
@@ -75,7 +73,7 @@ exports.handler = async (event) => {
 
         // Backwards-compatible migration from the legacy email/password auth table shape
         try {
-            await client.query(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;`);
+            await sql(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;`);
         } catch (_) {
             // Column may not exist; ignore
         }
@@ -84,7 +82,5 @@ exports.handler = async (event) => {
     } catch (err) {
         console.error('init_db error:', err);
         return json(500, { error: err.toString() });
-    } finally {
-        await client.end();
     }
 };
