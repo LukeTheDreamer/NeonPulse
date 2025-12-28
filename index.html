@@ -1,54 +1,26 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NEON PULSE</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-
-<style>
-body { background:#050505; color:white; }
-.hidden { display:none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON PULSE | Arcade Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <style>
+        body { background-color: #050505; color: white; margin: 0; }
+        .clip-cyber-btn { clip-path: polygon(10% 0%, 100% 0%, 100% 70%, 90% 100%, 0% 100%, 0% 30%); }
+    </style>
 </head>
-
-<body>
-
-<!-- NAV -->
-<nav class="flex justify-between px-8 py-6 bg-black/80 border-b border-white/10">
-  <div class="font-orbitron text-2xl">Neon<span class="text-pink-500">Pulse</span></div>
-
-  <div id="auth-controls">
-    <button id="loginBtn" class="px-6 py-2 bg-cyan-400 text-black">Login</button>
-    <button id="logoutBtn" class="px-6 py-2 bg-red-500 text-white hidden">Logout</button>
-  </div>
-</nav>
-
-<!-- HERO -->
-<header class="text-center py-24">
-  <h1 class="text-8xl font-orbitron">NEON PULSE</h1>
-  <p class="text-pink-500 tracking-widest mt-4">SYSTEM ONLINE</p>
-
-  <button id="launchGame"
-    class="mt-12 px-12 py-5 bg-cyan-400 text-black font-black text-xl">
-    INITIALIZE
-  </button>
-</header>
-
-<!-- STORE MODAL -->
-<div id="storeModal" class="fixed inset-0 bg-black/95 hidden items-center justify-center">
-  <div class="bg-gray-900 p-8 border border-cyan-400 w-[600px]">
-    <h2 class="text-3xl mb-6">SYSTEM MARKET</h2>
-    <button data-item="credits_5000" class="purchaseBtn">5,000 Credits – $5</button>
-    <button id="closeStore" class="mt-6 text-red-500">Close</button>
-  </div>
-</div>
-
-<script src="/js/auth.js"></script>
-<script src="/js/store.js"></script>
-<script src="/js/app.js"></script>
+<body class="font-rajdhani">
+    <div id="root">
+        <div class="flex flex-col items-center justify-center h-screen bg-[#050505] z-50">
+            <h1 class="font-orbitron text-cyan-400 tracking-[0.5em] animate-pulse text-xs uppercase">Conectando ao Mictlan...</h1>
+        </div>
+    </div>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="/js/games/neonstorm.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>

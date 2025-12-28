@@ -1,15 +1,23 @@
-<!DOCTYPE html>
-<html>
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Neon Storm</title>
-<script src="/js/games/neonstorm.js"></script>
+    <meta charset="UTF-8">
+    <title>NEON STORM | Combat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #000; margin: 0; overflow: hidden; }</style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<script>
-  startNeonStorm({
-    onExit: () => window.location.href = "/"
-  });
-</script>
+    <div id="game-container"></div>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="/js/games/neonstorm.js"></script>
+    <script>
+        if(window.NeonStormGame) {
+            const root = ReactDOM.createRoot(document.getElementById('game-container'));
+            root.render(React.createElement(window.NeonStormGame, { 
+                onExit: () => window.location.href = '/' 
+            }));
+        }
+    </script>
 </body>
 </html>

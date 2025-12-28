@@ -1,30 +1,6 @@
-# netlify.toml - CORRECTED VERSION
-
-[build]
+﻿[build]
   publish = "."
-  command = "echo 'Static site - no build needed'"
-
-# Serve static assets directly (NO redirects for these)
-[[headers]]
-  for = "/js/*"
-  [headers.values]
-    Content-Type = "application/javascript"
-    Cache-Control = "public, max-age=31536000"
-
-[[headers]]
-  for = "*.html"
-  [headers.values]
-    Content-Type = "text/html; charset=UTF-8"
-
-# Only redirect API calls to functions
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# DO NOT include a catch-all /* redirect - this breaks JS files!
-# If you have this line, DELETE IT:
-# [[redirects]]
-#   from = "/*"
-#   to = "/index.html"
-#   status = 200
+[functions]
+  node_bundler = "esbuild"
+[identity]
+  enable = true
