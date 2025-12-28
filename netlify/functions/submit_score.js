@@ -1,54 +1,96 @@
 const { Client } = require('pg');
 
 exports.handler = async (event, context) => {
-  // 1. CORS Headers (Allows your game to talk to this script)
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
-  };
-
-  // 2. Handle Preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+  // 1. SECURITY: Only allow POST requests
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // 3. Connect to Database (Only if configured)
-  if (!process.env.DATABASE_URL) {
-    return { statusCode: 200, headers, body: JSON.stringify({ message: "No DB configured, score ignored (Dev Mode)" }) };
+  // 2. SECURITY: Check for Netlify Identity User
+  // Netlify automatically decodes the JWT and puts the user info here.
+  const { user } = context.clientContext;
+  
+  if (!user) {
+    return { statusCode: 401, body: 'You must be logged in to save scores.' };
   }
 
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  const { sub: userId, email } = user;
+  
+  // Parse the incoming data
+  let body;
+  try {
+    body = JSON.parse(event.body);
+  } catch (e) {
+    return { statusCode: 400, body: 'Invalid JSON' };
+  }
+
+  const { gameId, score } = body;
+
+  // 3. VALIDATION: Basic sanity checks
+  if (!gameId || typeof score !== 'number') {
+    return { statusCode: 400, body: 'Missing gameId or score' };
+  }
+
+  // Connect to Neon Database
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // Required for Neon
+  });
 
   try {
     await client.connect();
-    const data = JSON.parse(event.body);
-    const { username, score } = data;
 
-    // Simple Validation
-    if (!username || !score) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing data" }) };
-    }
+    // 4. LAZY SYNC: Ensure user exists in our DB
+    // We use ON CONFLICT to do nothing if they already exist.
+    // This removes the need for a separate registration flow.
+    const syncUserQuery = `
+      INSERT INTO users (user_id, email)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id) DO UPDATE 
+      SET email = EXCLUDED.email; -- Update email if it changed in Google/Netlify
+    `;
+    await client.query(syncUserQuery, [userId, email]);
 
-    // Insert Score
-    const query = 'INSERT INTO scores (username, score, date) VALUES ($1, $2, NOW()) RETURNING *';
-    await client.query(query, [username, score]);
+    // 5. SUBMIT SCORE
+    // We insert the score. Since 'gameId' is a Foreign Key, 
+    // this will fail automatically if you send a fake game ID.
+    const insertScoreQuery = `
+      INSERT INTO scores (user_id, game_id, score, metadata)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, created_at;
+    `;
+    
+    // Optional: Add metadata like timestamp to catch impossible speed-runs later
+    const metadata = {
+        submitted_at: new Date().toISOString(),
+        platform: 'web',
+        context: 'standard_play'
+    };
+
+    const result = await client.query(insertScoreQuery, [userId, gameId, score, metadata]);
 
     await client.end();
 
     return {
       statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: "Score saved!" }),
+      body: JSON.stringify({
+        message: 'Score saved successfully!',
+        scoreId: result.rows[0].id
+      }),
     };
 
   } catch (error) {
-    console.error("DB Error:", error);
-    await client.end(); // Ensure connection closes
+    console.error('Database Error:', error);
+    await client.end();
+
+    // Handle specific errors nicely
+    if (error.code === '23503') { // Postgres Foreign Key Violation (e.g., bad game_id)
+        return { statusCode: 400, body: 'Invalid Game ID. Check your game config.' };
+    }
+
     return {
       statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: error.message }),
+      body: 'Internal Server Error',
     };
   }
 };

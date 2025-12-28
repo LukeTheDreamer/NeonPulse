@@ -52,7 +52,7 @@ window.NeonStormGame = ({ onExit }) => {
     const [showStory, setShowStory] = useState(false);
     const [showTips, setShowTips] = useState(false);
     
-    // Player Profile State (UPDATED: Defaults to 0, syncs with LocalStorage)
+    // Player Profile State
     const [credits, setCredits] = useState(() => {
         const saved = localStorage.getItem('credits');
         return saved ? parseInt(saved, 10) : 0; 
@@ -92,29 +92,73 @@ window.NeonStormGame = ({ onExit }) => {
     useEffect(() => { isHangarOpenRef.current = showHangar || showStory || showTips; }, [showHangar, showStory, showTips]);
     useEffect(() => { isMusicEnabledRef.current = isMusicEnabled; }, [isMusicEnabled]);
     
-    // UPDATED: Sync Credits to LocalStorage when they change (e.g. spending on themes)
+    // UPDATED: Sync Credits to LocalStorage
     useEffect(() => { localStorage.setItem('credits', credits); }, [credits]);
 
-    // --- API CALLS ---
+    // UPDATED: Check for Logged In User on Mount
+    useEffect(() => {
+        if (window.netlifyIdentity) {
+            const user = window.netlifyIdentity.currentUser();
+            if (user) {
+                // Pre-fill name from Identity or Metadata
+                setPlayerName(user.user_metadata?.full_name || user.email.split('@')[0].toUpperCase());
+            }
+        }
+    }, []);
+
+    // --- API CALLS (UPDATED FOR NETLIFY IDENTITY) ---
     const fetchLeaderboard = async () => {
         try {
             const res = await fetch('/.netlify/functions/get_scores');
             if (res.ok) setLeaderboard(await res.json());
-        } catch (err) { setLeaderboard([{ username: "NEON_GOD", score: 99999 }]); }
+        } catch (err) { 
+            // Fallback for dev/demo
+            setLeaderboard([{ username: "NEON_GOD", score: 99999 }]); 
+        }
     };
 
     const submitScore = async () => {
-        if (!playerName.trim()) return alert("Enter a name!");
+        if (!playerName.trim()) return alert("Enter a callsign!");
+        
+        // 1. Check Auth Status
+        const user = window.netlifyIdentity ? window.netlifyIdentity.currentUser() : null;
+        
+        if (!user) {
+            alert("Please Login to Upload Score");
+            window.netlifyIdentity.open(); // Open Login Modal
+            return;
+        }
+
         setIsLoading(true);
         try {
-            await fetch('/.netlify/functions/submit_score', {
+            // 2. Get Secure Token
+            const token = await user.jwt();
+
+            // 3. Send to Backend
+            const res = await fetch('/.netlify/functions/submit_score', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: playerName, score: score })
+                headers: { 
+                    'Authorization': `Bearer ${token}`, // Secure Header
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({ 
+                    gameId: 'neon-storm', // Must match DB 'games' table
+                    score: score,
+                    // Metadata is optional, but good for display
+                    metadata: { username: playerName } 
+                })
             });
-            setScoreSubmitted(true);
-            fetchLeaderboard();
-        } catch (err) { alert("Score not saved."); }
+
+            if (res.ok) {
+                setScoreSubmitted(true);
+                fetchLeaderboard();
+            } else {
+                throw new Error(await res.text());
+            }
+        } catch (err) { 
+            console.error(err);
+            alert("Score upload failed. Try again."); 
+        }
         setIsLoading(false);
     };
 
@@ -832,7 +876,7 @@ window.NeonStormGame = ({ onExit }) => {
                                     <h3 className="text-pink-500 font-black uppercase text-xs tracking-widest mb-4 border-b border-pink-500/20 pb-2">Global Network</h3>
                                     <div className="space-y-2 h-48 overflow-y-auto pr-2 custom-scrollbar">
                                         {leaderboard.map((entry, i) => (
-                                            <div key={i} className="flex justify-between items-center text-xs group font-mono hover:bg-white/5 p-1"><span className={`font-bold ${i < 3 ? 'text-yellow-400' : 'text-white/60'}`}>{i+1}. {entry.username}</span><span className="text-cyan-400">{entry.score}</span></div>
+                                            <div key={i} className="flex justify-between items-center text-xs group font-mono hover:bg-white/5 p-1"><span className={`font-bold ${i < 3 ? 'text-yellow-400' : 'text-white/60'}`}>{i+1}. {entry.username || "Unknown"}</span><span className="text-cyan-400">{entry.score}</span></div>
                                         ))}
                                     </div>
                                 </div>

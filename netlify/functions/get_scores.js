@@ -1,34 +1,53 @@
 const { Client } = require('pg');
 
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-    body: JSON.stringify(body),
-  };
-}
-
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'GET') return json(405, { error: 'Method Not Allowed' });
+  // 1. Only allow GET requests
+  if (event.httpMethod !== 'GET') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
 
-  const rawLimit = event.queryStringParameters?.limit;
-  const limit = Math.max(1, Math.min(100, Number.parseInt(rawLimit || '10', 10) || 10));
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
 
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
     await client.connect();
-    const result = await client.query(
-      `SELECT username, score, date
-       FROM scores
-       ORDER BY score DESC, id DESC
-       LIMIT $1`,
-      [limit],
-    );
-    return json(200, result.rows);
-  } catch (err) {
-    return json(500, { error: 'Server Error' });
-  } finally {
-    await client.end().catch(() => {});
+
+    // 2. Fetch Top 10 Scores with User Info
+    // We use a LEFT JOIN to ensure we get user data
+    // SPLIT_PART(u.email, '@', 1) acts as a fallback "Pilot Name" 
+    const query = `
+      SELECT 
+        s.score, 
+        s.created_at,
+        COALESCE(s.metadata->>'username', SPLIT_PART(u.email, '@', 1)) as username
+      FROM scores s
+      JOIN users u ON s.user_id = u.user_id
+      WHERE s.game_id = 'neon-storm'
+      ORDER BY s.score DESC
+      LIMIT 10;
+    `;
+
+    const result = await client.query(query);
+    await client.end();
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify(result.rows),
+    };
+
+  } catch (error) {
+    console.error('Leaderboard Fetch Error:', error);
+    if (client) await client.end();
+
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to retrieve leaderboard' }),
+    };
   }
 };
-
