@@ -1,15 +1,30 @@
+# netlify.toml - CORRECTED VERSION
+
 [build]
-  # If your files are in the root, leave this as "."
-  # If they are in a folder like 'dist', change to "dist"
   publish = "."
+  command = "echo 'Static site - no build needed'"
 
-[functions]
-  node_bundler = "esbuild"
+# Serve static assets directly (NO redirects for these)
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Content-Type = "application/javascript"
+    Cache-Control = "public, max-age=31536000"
 
-[identity]
-  enable = true
+[[headers]]
+  for = "*.html"
+  [headers.values]
+    Content-Type = "text/html; charset=UTF-8"
 
-# NO REDIRECTS SECTION: 
-# Since this is a static-first, non-SPA project, we omit the catch-all redirect.
-# This prevents the "Unexpected token '<'" error by allowing the server 
-# to return a 404 for missing files instead of forcing index.html.
+# Only redirect API calls to functions
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# DO NOT include a catch-all /* redirect - this breaks JS files!
+# If you have this line, DELETE IT:
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200

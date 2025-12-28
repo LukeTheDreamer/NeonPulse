@@ -33,7 +33,7 @@ const getRank = (combo) => {
 // ==========================================
 // 2. MAIN GAME COMPONENT
 // ==========================================
-window.NeonStormGame = ({ onExit }) => {
+window.NeonStormGame = ({ onExit, user }) => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     
@@ -52,11 +52,8 @@ window.NeonStormGame = ({ onExit }) => {
     const [showStory, setShowStory] = useState(false);
     const [showTips, setShowTips] = useState(false);
     
-    // Player Profile State
-    const [credits, setCredits] = useState(() => {
-        const saved = localStorage.getItem('credits');
-        return saved ? parseInt(saved, 10) : 0; 
-    });
+    // FIXED: Get credits from authenticated user instead of localStorage
+    const credits = user?.credits || 0;
     
     const [unlockedThemes, setUnlockedThemes] = useState(['NEON']);
     const [activeTheme, setActiveTheme] = useState(THEMES.NEON);
@@ -92,27 +89,38 @@ window.NeonStormGame = ({ onExit }) => {
     useEffect(() => { isHangarOpenRef.current = showHangar || showStory || showTips; }, [showHangar, showStory, showTips]);
     useEffect(() => { isMusicEnabledRef.current = isMusicEnabled; }, [isMusicEnabled]);
     
-    // UPDATED: Sync Credits to LocalStorage
-    useEffect(() => { localStorage.setItem('credits', credits); }, [credits]);
+    // REMOVED: localStorage sync effect
+    // useEffect(() => { localStorage.setItem('credits', credits); }, [credits]);
 
-    // UPDATED: Check for Logged In User on Mount
+    // FIXED: Auto-fill name from authenticated user
     useEffect(() => {
-        if (window.netlifyIdentity) {
-            const user = window.netlifyIdentity.currentUser();
-            if (user) {
-                // Pre-fill name from Identity or Metadata
-                setPlayerName(user.user_metadata?.full_name || user.email.split('@')[0].toUpperCase());
-            }
+        if (user) {
+            setPlayerName(user.email?.split('@')[0].toUpperCase() || "PLAYER");
         }
+    }, [user]);
+
+    // Initialize stars for background
+    useEffect(() => {
+        const s = gameStateRef.current;
+        s.stars = Array.from({ length: 100 }, () => ({
+            x: Math.random() * 800,
+            y: Math.random() * 600,
+            size: Math.random() * 2,
+            speed: Math.random() * 2 + 0.5,
+            brightness: Math.random() * 0.5 + 0.3
+        }));
     }, []);
 
-    // --- API CALLS (UPDATED FOR NETLIFY IDENTITY) ---
+    // --- API CALLS ---
     const fetchLeaderboard = async () => {
         try {
-            const res = await fetch('/.netlify/functions/get_scores');
-            if (res.ok) setLeaderboard(await res.json());
+            const res = await fetch('/.netlify/functions/get_scores?gameId=neon-storm');
+            if (res.ok) {
+                const data = await res.json();
+                setLeaderboard(data);
+            }
         } catch (err) { 
-            // Fallback for dev/demo
+            console.error("Leaderboard fetch error:", err);
             setLeaderboard([{ username: "NEON_GOD", score: 99999 }]); 
         }
     };
@@ -120,32 +128,26 @@ window.NeonStormGame = ({ onExit }) => {
     const submitScore = async () => {
         if (!playerName.trim()) return alert("Enter a callsign!");
         
-        // 1. Check Auth Status
-        const user = window.netlifyIdentity ? window.netlifyIdentity.currentUser() : null;
-        
         if (!user) {
-            alert("Please Login to Upload Score");
-            window.netlifyIdentity.open(); // Open Login Modal
+            alert("Please login to submit scores");
+            if (window.netlifyIdentity) window.netlifyIdentity.open();
             return;
         }
 
         setIsLoading(true);
         try {
-            // 2. Get Secure Token
             const token = await user.jwt();
 
-            // 3. Send to Backend
             const res = await fetch('/.netlify/functions/submit_score', {
                 method: 'POST',
                 headers: { 
-                    'Authorization': `Bearer ${token}`, // Secure Header
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify({ 
-                    gameId: 'neon-storm', // Must match DB 'games' table
+                    gameId: 'neon-storm',
                     score: score,
-                    // Metadata is optional, but good for display
-                    metadata: { username: playerName } 
+                    metadata: { username: playerName }
                 })
             });
 
@@ -153,28 +155,46 @@ window.NeonStormGame = ({ onExit }) => {
                 setScoreSubmitted(true);
                 fetchLeaderboard();
             } else {
-                throw new Error(await res.text());
+                const error = await res.text();
+                throw new Error(error);
             }
         } catch (err) { 
-            console.error(err);
-            alert("Score upload failed. Try again."); 
+            console.error("Score submission error:", err);
+            alert("Score upload failed. Please try again."); 
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
-    // --- SHOP LOGIC ---
-    const handleBuyTheme = (themeId) => {
+    // FIXED: Theme purchase with auth check
+    const handleBuyTheme = async (themeId) => {
         const theme = THEMES[themeId];
+        
         if (unlockedThemes.includes(themeId)) {
             setActiveTheme(theme);
-        } else {
-            if (credits >= theme.price) {
-                setCredits(prev => prev - theme.price);
-                setUnlockedThemes(prev => [...prev, themeId]);
-                setActiveTheme(theme);
-            } else {
-                alert("INSUFFICIENT CREDITS");
-            }
+            return;
+        }
+
+        if (credits < theme.price) {
+            alert("INSUFFICIENT CREDITS");
+            return;
+        }
+
+        if (!user) {
+            alert("Please login to purchase themes");
+            if (window.netlifyIdentity) window.netlifyIdentity.open();
+            return;
+        }
+
+        try {
+            // TODO: Backend integration for theme purchases
+            // For now, unlock locally (TEMPORARY)
+            setUnlockedThemes(prev => [...prev, themeId]);
+            setActiveTheme(theme);
+            alert("Theme unlocked! (Note: Backend integration pending)");
+        } catch (err) {
+            console.error("Theme purchase error:", err);
+            alert("Purchase failed. Please try again.");
         }
     };
 
@@ -498,7 +518,6 @@ window.NeonStormGame = ({ onExit }) => {
                 if (e.type === 'stalker') e.x += Math.sign((s.player.x+25)-(e.x+25)) * 1.8;
                 else if (e.type === 'phantom') e.x += Math.sin(now / 150) * 5;
                 
-                // COMBO RULE #3: Enemy crosses bottom = BREAK COMBO
                 if (e.y > 600 && !e.escaped) {
                     if (s.currentCombo > 0) {
                         gameStateRef.current.floatingTexts.push({ x: e.x, y: 580, text: "COMBO BROKEN", life: 1.0, scale: 0, vy: -1, color: '#ff003c' });
@@ -629,7 +648,6 @@ window.NeonStormGame = ({ onExit }) => {
                 const ex = e.x, ey = e.y; 
                 ctx.save(); 
                 ctx.translate(ex+25, ey+25); 
-                // Pop in scale
                 if(e.scale !== undefined) ctx.scale(e.scale, e.scale);
                 
                 ctx.lineWidth = 2;
@@ -647,7 +665,6 @@ window.NeonStormGame = ({ onExit }) => {
         }
 
         s.bullets.forEach(b => { 
-            // COSMETIC: Bullet colors based on Theme
             ctx.fillStyle = b.isPlayer ? (b.type === 'side' ? theme.secondary : theme.primary) : (b.color || '#ff0000');
             ctx.shadowBlur = 5; ctx.shadowColor = ctx.fillStyle; 
             if (b.isPlayer) { ctx.beginPath(); ctx.moveTo(b.x + 4.5, b.y); ctx.lineTo(b.x + 9, b.y + 15); ctx.lineTo(b.x + 4.5, b.y + 10); ctx.lineTo(b.x, b.y + 15); ctx.fill(); } 
@@ -739,7 +756,11 @@ window.NeonStormGame = ({ onExit }) => {
                     <div className="max-w-4xl w-full bg-black border border-cyan-500 p-8 clip-cyber relative">
                         <button onClick={() => setShowHangar(false)} className="absolute top-4 right-4 text-cyan-500 hover:text-white">[X] CLOSE</button>
                         <h2 className="text-4xl font-black text-white mb-6 text-center font-orbitron">HANGAR // CUSTOMIZE</h2>
-                        <div className="text-center mb-8 text-cyan-400 font-mono tracking-widest">CREDITS: {credits}</div>
+                        <div className="text-center mb-8">
+                            <span className="text-cyan-400 font-mono tracking-widest">CREDITS: </span>
+                            <span className="text-yellow-400 font-black text-2xl">{credits?.toLocaleString() || '0'}</span>
+                            {!user && <p className="text-red-400 text-xs mt-2">Login to save purchases</p>}
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {Object.values(THEMES).map(theme => {
                                 const isUnlocked = unlockedThemes.includes(theme.id);
@@ -757,8 +778,9 @@ window.NeonStormGame = ({ onExit }) => {
                                                 </button>
                                             ) : (
                                                 <button 
-                                                    onClick={() => handleBuyTheme(theme.id)} 
-                                                    className="px-4 py-1 text-xs font-bold uppercase bg-white/10 text-white hover:bg-white hover:text-black clip-cyber-btn w-full"
+                                                    onClick={() => handleBuyTheme(theme.id)}
+                                                    disabled={!user}
+                                                    className="px-4 py-1 text-xs font-bold uppercase bg-white/10 text-white hover:bg-white hover:text-black clip-cyber-btn w-full disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     BUY {theme.price}
                                                 </button>
@@ -808,7 +830,6 @@ window.NeonStormGame = ({ onExit }) => {
                     <button onClick={onExit} className="flex items-center gap-2 text-cyan-400 hover:text-white transition-colors bg-black/50 border border-cyan-400/30 px-6 py-3 rounded-none clip-cyber-btn uppercase tracking-widest font-bold text-xs hover:bg-cyan-400/20">
                         <span className="text-xl">«</span> Return
                     </button>
-                    {/* MUSIC TOGGLE BUTTON */}
                     <button onClick={toggleMusic} className={`flex items-center gap-2 transition-colors bg-black/50 border px-6 py-3 rounded-none clip-cyber-btn uppercase tracking-widest font-bold text-xs ${isMusicEnabled ? 'text-green-400 border-green-400/30 hover:bg-green-400/20' : 'text-red-400 border-red-400/30 hover:bg-red-400/20'}`}>
                         {isMusicEnabled ? '♫ ON' : '♫ OFF'}
                     </button>
@@ -905,24 +926,4 @@ window.NeonStormGame = ({ onExit }) => {
             </div>
         </div>
     );
-};
-
-// ==========================================
-// 3. GAME INITIALIZATION (THE BRIDGE)
-// ==========================================
-window.initGame = () => {
-    const rootElement = document.getElementById('game-container');
-    if (rootElement && window.ReactDOM) {
-        // Clear the loading/static HTML
-        const root = ReactDOM.createRoot(rootElement);
-        
-        // Render the React Game Component
-        root.render(
-            React.createElement(window.NeonStormGame, { 
-                onExit: () => window.location.href = '../../index.html' 
-            })
-        );
-    } else {
-        console.error("React or Game Container not found.");
-    }
 };
