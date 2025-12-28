@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEON STORM - Simulation</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
@@ -19,206 +23,25 @@
 </head>
 <body class="text-white h-screen w-screen flex items-center justify-center bg-black">
 
-    <div id="game-container" class="relative w-[800px] h-[600px] bg-black shadow-[0_0_80px_rgba(0,243,255,0.15)] border border-cyan-500/20">
-        
-        <canvas id="gameCanvas" width="800" height="600" class="block w-full h-full"></canvas>
-
-        <div id="ui-layer" class="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between hidden">
-            <div class="flex justify-between items-start w-full">
-                <a href="../../index.html" class="pointer-events-auto text-cyan-400 bg-black/50 border border-cyan-400/30 px-4 py-2 clip-cyber-btn hover:bg-cyan-400/20 text-sm font-bold no-underline transition-colors">
-                    « ARCADE HUB
-                </a>
-                
-                <div class="text-right bg-black/40 p-4 border border-cyan-400/20 clip-cyber-btn">
-                    <p class="text-[10px] text-cyan-400/60 uppercase font-black tracking-widest">Score</p>
-                    <p class="text-4xl font-black text-white font-mono" id="hud-score">0</p>
-                </div>
-            </div>
+    <div id="game-container" class="relative w-full h-full flex items-center justify-center bg-black">
+        <div class="text-cyan-500 font-mono tracking-widest animate-pulse">
+            INITIALIZING NEON STORM...
         </div>
-
-        <div id="menu-screen" class="absolute inset-0 z-30 flex items-center justify-center bg-[#050505]/95 backdrop-blur-xl p-8">
-            <div class="max-w-4xl w-full flex flex-col items-center clip-cyber border border-cyan-400/30 p-8 bg-black/80">
-                <h1 class="text-6xl font-black text-cyan-400 mb-2 italic uppercase font-orbitron tracking-tighter">NEON STORM</h1>
-                <p class="text-pink-500 font-mono tracking-[0.5em] mb-8 text-xs">OFFICIAL RELEASE v1.0</p>
-
-                <div class="w-full flex gap-4 mb-8">
-                     <div class="flex-1 bg-black/40 p-6 border border-white/10 relative text-center">
-                        <p class="text-white/50 text-xs uppercase tracking-[0.2em]">High Score</p>
-                        <p id="menu-score" class="text-5xl font-black text-white font-mono">0</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 w-full justify-center">
-                    <button id="btn-shop" class="bg-white/10 hover:bg-white/20 text-cyan-400 font-bold py-4 px-6 text-lg uppercase clip-cyber-btn tracking-widest border border-cyan-400/50 flex-1">HANGAR</button>
-                    <button id="btn-support" class="bg-pink-500/10 hover:bg-pink-500/20 text-pink-500 font-bold py-4 px-6 text-lg uppercase clip-cyber-btn tracking-widest border border-pink-500/50 flex-1">SUPPORT</button>
-                    <button id="btn-start" class="bg-white hover:bg-cyan-400 hover:text-black text-black font-black py-4 px-12 text-xl uppercase clip-cyber-btn tracking-widest transform hover:scale-105 transition-transform flex-[2]">INITIATE</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="shop-screen" class="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex items-center justify-center hidden">
-            <div class="max-w-4xl w-full bg-black border border-cyan-500 p-8 clip-cyber relative">
-                <button id="btn-close-shop" class="absolute top-4 right-4 text-cyan-500 hover:text-white font-mono">[X] CLOSE</button>
-                <h2 class="text-4xl font-black text-white mb-6 text-center font-orbitron">HANGAR</h2>
-                <div class="text-center mb-8 text-cyan-400 font-mono tracking-widest">CREDITS: <span id="shop-credits">...</span></div>
-                <div id="theme-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-            </div>
-        </div>
-
-        <div id="support-screen" class="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center hidden">
-            <div class="max-w-5xl w-full h-full p-8 overflow-y-auto custom-scrollbar">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-4xl font-black text-white font-orbitron">SUPPORTER <span class="text-pink-500">PROGRAM</span></h2>
-                    <button id="btn-close-support" class="text-pink-500 hover:text-white font-mono">[X] CLOSE</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-rajdhani mb-8">
-                     <div class="bg-gray-900 border border-cyan-500/30 p-6 flex flex-col items-center text-center clip-cyber hover:border-cyan-400 transition-all">
-                        <h3 class="text-2xl font-black text-cyan-400 font-orbitron mb-2">INITIATE</h3>
-                        <div class="text-4xl font-bold text-white mb-4">$30</div>
-                        <button onclick="buySupporter(1)" class="w-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-400 hover:text-black font-bold py-3 uppercase clip-cyber-btn">SUPPORT</button>
-                    </div>
-                    <div class="bg-gray-900 border border-pink-500/30 p-6 flex flex-col items-center text-center clip-cyber hover:border-pink-500 transition-all">
-                        <h3 class="text-2xl font-black text-pink-500 font-orbitron mb-2">VETERAN</h3>
-                        <div class="text-4xl font-bold text-white mb-4">$90</div>
-                        <button onclick="buySupporter(2)" class="w-full bg-pink-500 text-white hover:bg-pink-400 font-bold py-3 uppercase clip-cyber-btn">SUPPORT</button>
-                    </div>
-                    <div class="bg-gray-900 border border-yellow-400/30 p-6 flex flex-col items-center text-center clip-cyber hover:border-yellow-400 transition-all">
-                        <h3 class="text-2xl font-black text-yellow-400 font-orbitron mb-2">LEGEND</h3>
-                        <div class="text-4xl font-bold text-white mb-4">$500</div>
-                        <button onclick="buySupporter(3)" class="w-full bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400 hover:text-black font-bold py-3 uppercase clip-cyber-btn">SUPPORT</button>
-                    </div>
-                </div>
-                <div class="max-w-lg mx-auto bg-black/80 border border-white/20 p-6 clip-cyber text-center">
-                    <h3 class="text-xl font-bold text-white mb-2 font-orbitron">DIRECT DONATION</h3>
-                    <div class="flex items-center justify-center gap-4 mb-4">
-                        <span class="text-2xl text-cyan-400 font-bold">$</span>
-                        <input type="number" id="donation-amount" value="5" min="5" step="1" class="bg-transparent border-b-2 border-cyan-500 text-3xl font-bold text-white w-24 text-center focus:outline-none focus:border-white transition-colors" onchange="if(this.value<5)this.value=5">
-                    </div>
-                    <button onclick="makeDonation()" class="w-full bg-white text-black hover:bg-cyan-400 font-bold py-3 uppercase clip-cyber-btn tracking-widest transition-all">DONATE NOW</button>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script src="neonstorm.js"></script>
 
     <script>
-        // --- 1. CONFIG & STATE ---
-        const THEMES = {
-            NEON: { id: 'NEON', name: 'CYBER DEFAULT', price: 0, primary: '#00f3ff', secondary: '#ff003c' },
-            VOID: { id: 'VOID', name: 'VOID WALKER', price: 2000, primary: '#8b5cf6', secondary: '#4c1d95' },
-            MATRIX: { id: 'MATRIX', name: 'SYSTEM ROOT', price: 3500, primary: '#00ff00', secondary: '#003300' },
-            GOLD: { id: 'GOLD', name: 'MIDAS TOUCH', price: 10000, primary: '#ffd700', secondary: '#ffffff' }
-        };
-
-        const getUserId = () => localStorage.getItem('userId') || 'pilot_GUEST';
-        
-        // Sync State from LocalStorage (Shared with Hub)
-        const userState = {
-            id: getUserId(),
-            credits: parseInt(localStorage.getItem('credits') || '100000'),
-            unlockedThemes: JSON.parse(localStorage.getItem('unlockedThemes') || '["NEON"]'),
-            activeTheme: JSON.parse(localStorage.getItem('activeTheme') || JSON.stringify(THEMES.NEON))
-        };
-
-        // --- 2. MENU UI WIRING ---
-        const menuScreen = document.getElementById('menu-screen');
-        const shopScreen = document.getElementById('shop-screen');
-        const supportScreen = document.getElementById('support-screen');
-        const uiLayer = document.getElementById('ui-layer');
-
-        document.getElementById('btn-start').onclick = () => {
-            menuScreen.classList.add('hidden');
-            uiLayer.classList.remove('hidden');
-            // Trigger the game Init found in neonstorm.js
-            if(typeof initGame === 'function') {
+        window.addEventListener('load', () => {
+            // This calls the function you added to the bottom of neonstorm.js
+            if (typeof initGame === 'function') {
                 initGame();
             } else {
-                console.error("NeonStorm: initGame() function not found in neonstorm.js");
-                alert("System Error: Game Engine not loaded. \n\nPlease ensure 'neonstorm.js' is in the same folder and the name is all lowercase.");
+                console.error("Game Engine not found. Make sure neonstorm.js is loaded and has initGame() at the bottom.");
+                document.getElementById('game-container').innerHTML = 
+                    '<div class="text-red-500 font-bold">ERROR: neonstorm.js not loaded correctly.</div>';
             }
-        };
-
-        // Shop Buttons
-        document.getElementById('btn-shop').onclick = () => { shopScreen.classList.remove('hidden'); renderShop(); };
-        document.getElementById('btn-close-shop').onclick = () => shopScreen.classList.add('hidden');
-
-        // Support Buttons
-        document.getElementById('btn-support').onclick = () => supportScreen.classList.remove('hidden');
-        document.getElementById('btn-close-support').onclick = () => supportScreen.classList.add('hidden');
-
-        // Check for 'support' URL param
-        if(window.location.search.includes('menu=support')) {
-            supportScreen.classList.remove('hidden');
-        }
-
-        // --- 3. SHOP LOGIC (Replicated from Hub) ---
-        function renderShop() {
-            document.getElementById('shop-credits').innerText = userState.credits;
-            const grid = document.getElementById('theme-grid');
-            grid.innerHTML = '';
-            
-            Object.values(THEMES).forEach(t => {
-                const isUnlocked = userState.unlockedThemes.includes(t.id);
-                const isEquipped = userState.activeTheme.id === t.id;
-                
-                const div = document.createElement('div');
-                div.className = `p-4 border ${isEquipped ? 'border-yellow-400 bg-yellow-400/10' : 'border-white/20 bg-white/5'} flex flex-col items-center gap-2 group hover:border-cyan-400 transition-all`;
-                div.innerHTML = `
-                    <div class="w-16 h-16 rounded-full mb-2 border-2" style="background: linear-gradient(135deg, ${t.primary}, ${t.secondary}); border-color: ${t.primary}"></div>
-                    <h3 class="font-bold text-white text-xs tracking-widest">${t.name}</h3>
-                    <button class="px-4 py-2 text-xs font-bold uppercase clip-cyber-btn w-full mt-2 transition-colors ${isUnlocked ? (isEquipped ? 'bg-yellow-400 text-black cursor-default' : 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-400 hover:text-black') : 'bg-white/10 text-white hover:bg-white hover:text-black'}">
-                        ${isUnlocked ? (isEquipped ? 'EQUIPPED' : 'EQUIP') : `BUY ${t.price}`}
-                    </button>
-                `;
-                const btn = div.querySelector('button');
-                if (!isEquipped) {
-                    btn.onclick = () => {
-                        if (isUnlocked) {
-                            userState.activeTheme = t;
-                            saveState(); renderShop();
-                        } else if (userState.credits >= t.price) {
-                            if(confirm(`Purchase ${t.name}?`)) {
-                                userState.credits -= t.price;
-                                userState.unlockedThemes.push(t.id);
-                                userState.activeTheme = t;
-                                saveState(); renderShop();
-                            }
-                        } else alert('INSUFFICIENT CREDITS');
-                    };
-                }
-                grid.appendChild(div);
-            });
-        }
-
-        function saveState() {
-            localStorage.setItem('credits', userState.credits);
-            localStorage.setItem('unlockedThemes', JSON.stringify(userState.unlockedThemes));
-            localStorage.setItem('activeTheme', JSON.stringify(userState.activeTheme));
-        }
-
-        // --- 4. PAYMENT LOGIC ---
-        async function buySupporter(tier) {
-            try {
-                const res = await fetch('/.netlify/functions/create_checkout', {
-                    method: 'POST', body: JSON.stringify({ type: 'tier', tier: tier, userId: userState.id })
-                });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-            } catch (e) { alert("Error connecting to checkout"); }
-        }
-
-        async function makeDonation() {
-            const amount = document.getElementById('donation-amount').value;
-            try {
-                const res = await fetch('/.netlify/functions/create_checkout', {
-                    method: 'POST', body: JSON.stringify({ type: 'donation', amount: amount, userId: userState.id })
-                });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-            } catch (e) { alert("Error connecting to checkout"); }
-        }
+        });
     </script>
 </body>
 </html>

@@ -862,3 +862,22 @@ window.NeonStormGame = ({ onExit }) => {
         </div>
     );
 };
+// ==========================================
+// 3. GAME INITIALIZATION (THE BRIDGE)
+// ==========================================
+window.initGame = () => {
+    const rootElement = document.getElementById('game-container');
+    if (rootElement && window.ReactDOM) {
+        // Clear the loading/static HTML
+        const root = ReactDOM.createRoot(rootElement);
+        
+        // Render the React Game Component
+        root.render(
+            React.createElement(window.NeonStormGame, { 
+                onExit: () => window.location.href = '../../index.html' 
+            })
+        );
+    } else {
+        console.error("React or Game Container not found.");
+    }
+};
