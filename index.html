@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Neon Pulse - Cyberpunk Arcade Interface and Leaderboards">
+    <meta name="description" content="Neon Pulse - Cyberpunk Arcade Interface and Game">
     <meta name="theme-color" content="#050510">
     
     <title>NEON PULSE | Command Interface</title>
@@ -43,92 +43,103 @@
         </header>
 
         <main>
-            <section class="game-section" aria-labelledby="arcade-title">
-                <div class="section-header">
-                    <h2 id="arcade-title">ARCADE GRID</h2>
-                    <span class="neural-link-status text-cyan">
-                        <span class="blink-dot">●</span> Connect Neural Link [ONLINE]
-                    </span>
-                </div>
+            <div id="dashboard-view">
+                <section class="game-section" aria-labelledby="arcade-title">
+                    <div class="section-header">
+                        <h2 id="arcade-title">ARCADE GRID</h2>
+                        <span class="neural-link-status text-cyan">
+                            <span class="blink-dot">●</span> Connect Neural Link [ONLINE]
+                        </span>
+                    </div>
 
-                <div class="arcade-grid">
-                    <article class="card card--active">
-                        <div class="card-bg bg-storm"></div>
-                        <div class="card-content">
-                            <h3 class="text-pink">NEON STORM</h3>
-                            <button id="btn-launch" class="btn btn--launch" type="button">LAUNCH SIMULATION</button>
-                        </div>
-                    </article>
+                    <div class="arcade-grid">
+                        <article class="card card--active">
+                            <div class="card-bg bg-storm"></div>
+                            <div class="card-content">
+                                <h3 class="text-pink">NEON STORM</h3>
+                                <button id="btn-launch" class="btn btn--launch" type="button">LAUNCH SIMULATION</button>
+                            </div>
+                        </article>
 
-                    <article class="card card--locked">
-                        <div class="card-bg bg-locked"></div>
-                        <div class="overlay-text">UNAVAILABLE</div>
-                        <div class="card-footer">OMNIKRON ASSAULT</div>
-                    </article>
-                    <article class="card card--locked">
-                        <div class="card-bg bg-locked"></div>
-                        <div class="overlay-text">UNAVAILABLE</div>
-                        <div class="card-footer">SHARD BLADES II</div>
-                    </article>
-                    <article class="card card--locked">
-                        <div class="card-bg bg-locked"></div>
-                        <div class="overlay-text">UNAVAILABLE</div>
-                        <div class="card-footer">DOWNSHIFTER V</div>
-                    </article>
-                </div>
-            </section>
-
-            <div class="bottom-section">
-                <section class="panel supply-depot" aria-labelledby="supply-title">
-                    <h3 id="supply-title">// SUPPLY DEPOT //</h3>
-                    <div class="supply-grid">
-                        <button class="btn btn--supply btn--blue" data-action="add-credits" data-amount="5000">
-                            <span aria-hidden="true">💎</span> 5,000 CREDITS ($5)
-                        </button>
-                        <button class="btn btn--supply btn--green" data-action="buy-item" data-item="Tier 1 Initiate">
-                            <span aria-hidden="true">🛡️</span> TIER 1 INITIATE ($30)
-                        </button>
-                        <button class="btn btn--supply btn--blue" data-action="add-credits" data-amount="10000">
-                            <span aria-hidden="true">💎</span> 10,000 CREDITS ($10)
-                        </button>
-                        <button class="btn btn--supply btn--green" data-action="buy-item" data-item="Tier 2 Veteran">
-                            <span aria-hidden="true">🛡️</span> TIER 2 VETERAN ($50)
-                        </button>
-                        <button class="btn btn--supply btn--gold" data-action="donate" data-type="gold">
-                            <span aria-hidden="true">👑</span> PURE DONATION
-                        </button>
-                        <button class="btn btn--supply btn--pink" data-action="donate" data-type="heart">
-                            <span aria-hidden="true">❤️</span> PURE DONATION
-                        </button>
+                        <article class="card card--locked">
+                            <div class="card-bg bg-locked"></div>
+                            <div class="overlay-text">UNAVAILABLE</div>
+                            <div class="card-footer">OMNIKRON ASSAULT</div>
+                        </article>
+                        <article class="card card--locked">
+                            <div class="card-bg bg-locked"></div>
+                            <div class="overlay-text">UNAVAILABLE</div>
+                            <div class="card-footer">SHARD BLADES II</div>
+                        </article>
+                        <article class="card card--locked">
+                            <div class="card-bg bg-locked"></div>
+                            <div class="overlay-text">UNAVAILABLE</div>
+                            <div class="card-footer">DOWNSHIFTER V</div>
+                        </article>
                     </div>
                 </section>
 
-                <aside class="panel leaderboards" aria-labelledby="lb-title">
-                    <h3 id="lb-title">GLOBAL LEADERBOARDS</h3>
-                    
-                    <div class="lb-container">
-                        <ul class="leaderboard-list">
-                            <li class="lb-header">TOP PILOTS</li>
-                            <li class="lb-item">
-                                <span class="text-cyan">1. ECHO TRACER:</span> 
-                                <span class="lb-val">120,500</span>
-                            </li>
-                            <li class="lb-item">
-                                <span class="text-cyan">2. FLUX_WAVE:</span> 
-                                <span class="lb-val">118,200</span>
-                            </li>
-                            <li class="lb-item">
-                                <span class="text-cyan">3. NULL_PTR:</span> 
-                                <span class="lb-val">99,450</span>
-                            </li>
-                            
-                            <li class="lb-header lb-header--secondary">TOP SUPPORTERS</li>
-                            <li class="lb-item">
-                                <span class="text-gold">1. LEGEND KING</span> 
-                            </li>
-                        </ul>
-                    </div>
-                </aside>
+                <div class="bottom-section">
+                    <section class="panel supply-depot" aria-labelledby="supply-title">
+                        <h3 id="supply-title">// SUPPLY DEPOT //</h3>
+                        <div class="supply-grid">
+                            <button class="btn btn--supply btn--blue" data-action="add-credits" data-amount="5000">
+                                <span aria-hidden="true">💎</span> 5,000 CREDITS ($5)
+                            </button>
+                            <button class="btn btn--supply btn--green" data-action="buy-item" data-item="Tier 1 Initiate">
+                                <span aria-hidden="true">🛡️</span> TIER 1 INITIATE ($30)
+                            </button>
+                            <button class="btn btn--supply btn--blue" data-action="add-credits" data-amount="10000">
+                                <span aria-hidden="true">💎</span> 10,000 CREDITS ($10)
+                            </button>
+                            <button class="btn btn--supply btn--green" data-action="buy-item" data-item="Tier 2 Veteran">
+                                <span aria-hidden="true">🛡️</span> TIER 2 VETERAN ($50)
+                            </button>
+                            <button class="btn btn--supply btn--gold" data-action="donate" data-type="gold">
+                                <span aria-hidden="true">👑</span> PURE DONATION
+                            </button>
+                            <button class="btn btn--supply btn--pink" data-action="donate" data-type="heart">
+                                <span aria-hidden="true">❤️</span> PURE DONATION
+                            </button>
+                        </div>
+                    </section>
+
+                    <aside class="panel leaderboards" aria-labelledby="lb-title">
+                        <h3 id="lb-title">GLOBAL LEADERBOARDS</h3>
+                        
+                        <div class="lb-container">
+                            <ul class="leaderboard-list">
+                                <li class="lb-header">TOP PILOTS</li>
+                                <li class="lb-item">
+                                    <span class="text-cyan">1. ECHO TRACER:</span> 
+                                    <span class="lb-val">120,500</span>
+                                </li>
+                                <li class="lb-item">
+                                    <span class="text-cyan">2. FLUX_WAVE:</span> 
+                                    <span class="lb-val">118,200</span>
+                                </li>
+                                <li class="lb-item">
+                                    <span class="text-cyan">3. NULL_PTR:</span> 
+                                    <span class="lb-val">99,450</span>
+                                </li>
+                                
+                                <li class="lb-header lb-header--secondary">TOP SUPPORTERS</li>
+                                <li class="lb-item">
+                                    <span class="text-gold">1. LEGEND KING</span> 
+                                </li>
+                            </ul>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+            <div id="game-view" class="hidden">
+                <div class="game-ui-header">
+                    <h3>SIMULATION: <span class="text-pink">NEON STORM</span></h3>
+                    <div class="game-controls-hint">[ ARROWS to Move ]</div>
+                    <button id="btn-exit-game" class="btn btn--small">ABORT SIMULATION</button>
+                </div>
+                <canvas id="game-canvas"></canvas>
             </div>
         </main>
 

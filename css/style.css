@@ -1,21 +1,30 @@
-/* --- 1. VARIABLES --- */
+/* =========================================
+   1. VARIABLES & THEME
+   ========================================= */
 :root {
+    /* Colors */
     --neon-pink: #ff00ff;
     --neon-cyan: #00ffff;
     --neon-green: #39ff14;
     --neon-gold: #ffd700;
+    
+    /* Backgrounds */
     --bg-dark: #050510;
     --bg-card: #0a0a12;
-    --bg-panel: rgba(0,0,0,0.5);
+    --bg-panel: rgba(0, 0, 0, 0.5);
     
+    /* Fonts */
     --font-display: 'Orbitron', sans-serif;
     --font-mono: 'Share Tech Mono', monospace;
 
+    /* Effects */
     --border-glow: 0 0 10px;
     --text-glow: 0 0 10px;
 }
 
-/* --- 2. RESET & BASE --- */
+/* =========================================
+   2. RESET & BASE
+   ========================================= */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -24,7 +33,7 @@
 
 body {
     background-color: var(--bg-dark);
-    /* Grid Pattern Background */
+    /* Tech Grid Pattern Background */
     background-image: 
         linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 0, 255, 0.03) 1px, transparent 1px);
@@ -38,22 +47,25 @@ body {
     padding: 20px;
 }
 
-/* --- 3. MAIN CONTAINER & DECORATION --- */
+/* =========================================
+   3. MAIN UI CONTAINER
+   ========================================= */
 .ui-container {
     width: 100%;
     max-width: 1200px;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0, 0, 0, 0.85);
     border: 4px solid var(--neon-cyan);
     box-shadow: 
         var(--border-glow) var(--neon-cyan),
-        inset 0 0 20px var(--neon-cyan);
+        inset 0 0 20px rgba(0, 255, 255, 0.2);
     position: relative;
     padding: 20px;
     display: flex;
     flex-direction: column;
+    min-height: 80vh; /* Ensure substantial height */
 }
 
-/* Decorative Corners using pseudo-elements */
+/* Decorative Corners (Cyberpunk shape) */
 .ui-container::before, .ui-container::after {
     content: '';
     position: absolute;
@@ -61,7 +73,6 @@ body {
     pointer-events: none;
     border: 4px solid var(--neon-pink);
     z-index: 10;
-    /* Clip-path creates the corner shapes */
     clip-path: polygon(
         0% 10%, 10% 10%, 10% 0%, 
         90% 0%, 90% 10%, 100% 10%, 
@@ -71,14 +82,22 @@ body {
     filter: drop-shadow(0 0 5px var(--neon-pink));
 }
 
-/* --- 4. TYPOGRAPHY & UTILS --- */
+/* =========================================
+   4. TYPOGRAPHY & UTILITIES
+   ========================================= */
 .text-pink { color: var(--neon-pink); text-shadow: var(--text-glow) var(--neon-pink); }
 .text-cyan { color: var(--neon-cyan); text-shadow: var(--text-glow) var(--neon-cyan); }
 .text-green { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
 .text-gold { color: var(--neon-gold); text-shadow: 0 0 5px var(--neon-gold); }
-.label-tiny { font-size: 0.8rem; color: #888; }
 
-/* --- 5. HEADER --- */
+.label-tiny { font-size: 0.8rem; color: #888; letter-spacing: 1px; }
+
+/* Utility class to switch views */
+.hidden { display: none !important; }
+
+/* =========================================
+   5. HEADER SECTION
+   ========================================= */
 .ui-header {
     display: flex;
     justify-content: space-between;
@@ -86,13 +105,13 @@ body {
     margin-bottom: 30px;
     border-bottom: 2px solid var(--neon-cyan);
     padding-bottom: 20px;
-    flex-wrap: wrap; /* Wraps on mobile */
+    flex-wrap: wrap;
     gap: 20px;
 }
 
 .logo {
     font-family: var(--font-display);
-    font-size: clamp(2rem, 5vw, 3rem); /* Responsive font size */
+    font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 900;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -119,6 +138,7 @@ body {
 
 .hex-icon { font-size: 24px; }
 .user-stats { line-height: 1.4; font-size: 0.9rem; }
+
 .supporter-tag {
     background: linear-gradient(90deg, #440044, transparent);
     border: 1px solid var(--neon-pink);
@@ -129,7 +149,9 @@ body {
     display: inline-block;
 }
 
-/* --- 6. ARCADE GRID --- */
+/* =========================================
+   6. DASHBOARD VIEW: ARCADE GRID
+   ========================================= */
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -156,7 +178,7 @@ body {
 
 .arcade-grid {
     display: grid;
-    /* Responsive Grid: Stacks on mobile, expands on desktop */
+    /* Responsive columns */
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 15px;
     margin-bottom: 30px;
@@ -182,9 +204,10 @@ body {
 
 .card--active:hover {
     transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
 }
 
-/* Backgrounds */
+/* Card Backgrounds */
 .card-bg {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -214,7 +237,87 @@ body {
     left: 0;
 }
 
-/* --- 7. BUTTONS --- */
+/* =========================================
+   7. DASHBOARD VIEW: BOTTOM PANEL
+   ========================================= */
+.bottom-section {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap; /* Stacks on mobile */
+}
+
+.panel {
+    flex: 1;
+    min-width: 300px;
+    border-top: 2px solid var(--neon-cyan);
+    padding-top: 15px;
+}
+
+.panel h3 {
+    color: var(--neon-cyan);
+    font-family: var(--font-display);
+    margin-bottom: 15px;
+}
+
+/* Supply Buttons Grid */
+.supply-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+/* Leaderboard List */
+.lb-container {
+    background: var(--bg-panel);
+    padding: 15px;
+    border: 1px solid #333;
+}
+
+.leaderboard-list { list-style: none; }
+.lb-item { margin-bottom: 8px; font-size: 0.9rem; display: flex; justify-content: space-between; }
+.lb-header { color: #888; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 5px; font-size: 0.8rem; letter-spacing: 1px; }
+.lb-header--secondary { margin-top: 15px; }
+
+/* =========================================
+   8. GAME VIEW (CANVAS)
+   ========================================= */
+#game-view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.game-ui-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--neon-pink);
+    padding-bottom: 10px;
+}
+
+.game-controls-hint {
+    font-size: 0.8rem;
+    color: #888;
+    animation: blink 2s infinite;
+}
+
+#game-canvas {
+    background: radial-gradient(circle at center, #1a1a2e, #000);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1);
+    width: 100%;
+    height: 450px; /* Fixed height for viewport */
+    image-rendering: pixelated; /* Crisp pixel art look */
+    cursor: crosshair;
+}
+
+/* =========================================
+   9. BUTTON STYLES
+   ========================================= */
 .btn {
     font-family: var(--font-display);
     cursor: pointer;
@@ -223,6 +326,7 @@ body {
     text-transform: uppercase;
 }
 
+/* Launch Button */
 .btn--launch {
     width: 100%;
     padding: 10px;
@@ -240,6 +344,7 @@ body {
     outline: none;
 }
 
+/* Supply Buttons */
 .btn--supply {
     background: transparent;
     padding: 12px;
@@ -250,63 +355,47 @@ body {
     align-items: center;
     gap: 10px;
     font-size: 0.9rem;
+    border: 1px solid #444; /* Fallback */
 }
 
-.btn--blue { border: 1px solid var(--neon-cyan); color: var(--neon-cyan); }
-.btn--green { border: 1px solid var(--neon-green); color: var(--neon-green); }
-.btn--gold { border: 1px solid var(--neon-gold); color: var(--neon-gold); }
-.btn--pink { border: 1px solid var(--neon-pink); color: var(--neon-pink); }
+.btn--blue { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+.btn--green { border-color: var(--neon-green); color: var(--neon-green); }
+.btn--gold { border-color: var(--neon-gold); color: var(--neon-gold); }
+.btn--pink { border-color: var(--neon-pink); color: var(--neon-pink); }
 
 .btn--supply:hover, .btn--supply:focus {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     transform: translateX(5px);
     outline: none;
 }
 
-/* --- 8. BOTTOM LAYOUT --- */
-.bottom-section {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap; /* Stacks on mobile */
+/* Small / Exit Button */
+.btn--small {
+    padding: 5px 15px;
+    font-size: 0.8rem;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff4444;
+    color: #ff4444;
 }
 
-.panel {
-    flex: 1;
-    min-width: 300px; /* Prevents squishing */
-    border-top: 2px solid var(--neon-cyan);
-    padding-top: 15px;
+.btn--small:hover {
+    background: #ff4444;
+    color: black;
 }
 
-.panel h3 {
-    color: var(--neon-cyan);
-    font-family: var(--font-display);
-    margin-bottom: 15px;
-}
-
-.supply-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-}
-
-/* Leaderboards */
-.lb-container {
-    background: var(--bg-panel);
-    padding: 15px;
-    border: 1px solid #333;
-}
-
-.leaderboard-list { list-style: none; }
-.lb-item { margin-bottom: 8px; font-size: 0.9rem; display: flex; justify-content: space-between; }
-.lb-header { color: #888; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 5px; font-size: 0.8rem; letter-spacing: 1px; }
-.lb-header--secondary { margin-top: 15px; }
-
-/* --- 9. ANIMATIONS & OVERLAYS --- */
+/* =========================================
+   10. ANIMATIONS & OVERLAYS
+   ========================================= */
 @keyframes blink { 
-    50% { opacity: 0; } 
+    50% { opacity: 0.3; } 
 }
 
-/* CRT Scanlines - Optimized */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* CRT Scanlines */
 .crt-overlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -314,13 +403,15 @@ body {
         rgba(18, 16, 16, 0) 50%, 
         rgba(0, 0, 0, 0.25) 50%
     );
-    background-size: 100% 4px; /* Slightly coarser for better perf */
+    background-size: 100% 4px;
     pointer-events: none;
     z-index: 100;
     opacity: 0.6;
 }
 
-/* --- 10. TOAST NOTIFICATIONS --- */
+/* =========================================
+   11. TOAST NOTIFICATIONS
+   ========================================= */
 .toast-container {
     position: fixed;
     top: 20px;
@@ -332,7 +423,7 @@ body {
 }
 
 .toast {
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     border-left: 4px solid var(--neon-cyan);
     color: white;
     padding: 15px 20px;
@@ -357,12 +448,13 @@ body {
     to { opacity: 0; transform: translateX(20px); }
 }
 
-/* --- 11. MEDIA QUERIES --- */
+/* =========================================
+   12. RESPONSIVE DESIGN
+   ========================================= */
 @media (max-width: 768px) {
     .ui-container {
         padding: 10px;
         border-width: 2px;
-        /* Disable complex clip-path on mobile if needed for space, but kept here for style */
     }
 
     .ui-header {
@@ -377,4 +469,6 @@ body {
     }
 
     .card { height: 200px; }
+    
+    #game-canvas { height: 300px; }
 }
