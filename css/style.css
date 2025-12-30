@@ -1,474 +1,163 @@
-/* =========================================
-   1. VARIABLES & THEME
-   ========================================= */
+/* --- Root Variables: The Aztec-Neon Palette --- */
 :root {
-    /* Colors */
-    --neon-pink: #ff00ff;
-    --neon-cyan: #00ffff;
-    --neon-green: #39ff14;
-    --neon-gold: #ffd700;
-    
-    /* Backgrounds */
-    --bg-dark: #050510;
-    --bg-card: #0a0a12;
-    --bg-panel: rgba(0, 0, 0, 0.5);
-    
-    /* Fonts */
-    --font-display: 'Orbitron', sans-serif;
-    --font-mono: 'Share Tech Mono', monospace;
-
-    /* Effects */
-    --border-glow: 0 0 10px;
-    --text-glow: 0 0 10px;
+    --obsidian: #0a0a0c;
+    --neon-pink: #ff00ea;
+    --neon-teal: #00f2ff;
+    --gold-leaf: #d4af37;
+    --blood-red: #8a0707;
+    --terminal-font: 'Orbitron', sans-serif;
+    --body-font: 'Michroma', sans-serif;
+    --border-glow: 0 0 10px rgba(0, 242, 255, 0.5);
 }
 
-/* =========================================
-   2. RESET & BASE
-   ========================================= */
+/* --- Base Styling --- */
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    background-color: var(--bg-dark);
-    /* Tech Grid Pattern Background */
+    background-color: var(--obsidian);
+    color: #fff;
+    font-family: var(--body-font);
+    overflow-x: hidden;
+    /* Aztec-inspired geometric background pattern */
     background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 0, 255, 0.03) 1px, transparent 1px);
-    background-size: 30px 30px;
-    color: white;
-    font-family: var(--font-mono);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+        linear-gradient(rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.9)),
+        url('https://www.transparenttextures.com/patterns/aztec-feather.png');
 }
 
-/* =========================================
-   3. MAIN UI CONTAINER
-   ========================================= */
-.ui-container {
-    width: 100%;
-    max-width: 1200px;
-    background: rgba(0, 0, 0, 0.85);
-    border: 4px solid var(--neon-cyan);
-    box-shadow: 
-        var(--border-glow) var(--neon-cyan),
-        inset 0 0 20px rgba(0, 255, 255, 0.2);
-    position: relative;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    min-height: 80vh; /* Ensure substantial height */
-}
-
-/* Decorative Corners (Cyberpunk shape) */
-.ui-container::before, .ui-container::after {
-    content: '';
-    position: absolute;
-    top: -4px; left: -4px; right: -4px; bottom: -4px;
-    pointer-events: none;
-    border: 4px solid var(--neon-pink);
-    z-index: 10;
-    clip-path: polygon(
-        0% 10%, 10% 10%, 10% 0%, 
-        90% 0%, 90% 10%, 100% 10%, 
-        100% 90%, 90% 90%, 90% 100%, 
-        10% 100%, 10% 90%, 0% 90%
-    );
-    filter: drop-shadow(0 0 5px var(--neon-pink));
-}
-
-/* =========================================
-   4. TYPOGRAPHY & UTILITIES
-   ========================================= */
-.text-pink { color: var(--neon-pink); text-shadow: var(--text-glow) var(--neon-pink); }
-.text-cyan { color: var(--neon-cyan); text-shadow: var(--text-glow) var(--neon-cyan); }
-.text-green { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
-.text-gold { color: var(--neon-gold); text-shadow: 0 0 5px var(--neon-gold); }
-
-.label-tiny { font-size: 0.8rem; color: #888; letter-spacing: 1px; }
-
-/* Utility class to switch views */
-.hidden { display: none !important; }
-
-/* =========================================
-   5. HEADER SECTION
-   ========================================= */
-.ui-header {
+/* --- Header & Navigation --- */
+.neural-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 30px;
-    border-bottom: 2px solid var(--neon-cyan);
-    padding-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.logo {
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.neural-interface {
-    display: flex;
     align-items: center;
-    gap: 15px;
+    padding: 2rem;
+    border-bottom: 2px solid var(--neon-teal);
+    box-shadow: var(--border-glow);
 }
 
-.hex-badge {
-    width: 60px;
-    height: 60px;
-    background: #111;
-    border: 2px solid var(--neon-gold);
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+.glitch-text {
+    font-family: var(--terminal-font);
+    font-size: 2.5rem;
+    color: var(--neon-teal);
+    text-shadow: 2px 2px var(--blood-red);
+    letter-spacing: 5px;
+}
+
+.user-stats {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 0 10px var(--neon-gold);
-    flex-shrink: 0;
-}
-
-.hex-icon { font-size: 24px; }
-.user-stats { line-height: 1.4; font-size: 0.9rem; }
-
-.supporter-tag {
-    background: linear-gradient(90deg, #440044, transparent);
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 4px;
     border: 1px solid var(--neon-pink);
-    padding: 2px 8px;
-    color: var(--neon-pink);
+}
+
+.stat-box .label {
+    color: var(--gold-leaf);
     font-size: 0.7rem;
-    margin-top: 5px;
-    display: inline-block;
+    display: block;
 }
 
-/* =========================================
-   6. DASHBOARD VIEW: ARCADE GRID
-   ========================================= */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--neon-cyan);
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-}
-
-.section-header h2 {
-    color: var(--neon-cyan);
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-}
-
-.neural-link-status {
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.blink-dot { animation: blink 1s infinite; }
-
-.arcade-grid {
+/* --- Portal Grid & Cards --- */
+.portal-grid {
     display: grid;
-    /* Responsive columns */
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 15px;
-    margin-bottom: 30px;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+    padding: 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.card {
-    background: var(--bg-card);
-    border: 1px solid #333;
+.game-card {
     position: relative;
+    height: 400px;
+    background: #1a1a1a;
+    border: 3px solid var(--neon-pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
-    height: 250px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 10px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.3s ease;
 }
 
-.card--active {
-    border: 2px solid var(--neon-pink);
-    box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
+.game-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px var(--neon-pink);
 }
 
-.card--active:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(255, 0, 255, 0.4);
+/* --- Buttons --- */
+.neon-btn {
+    background: transparent;
+    border: 2px solid var(--neon-teal);
+    color: var(--neon-teal);
+    font-family: var(--terminal-font);
+    cursor: pointer;
+    text-decoration: none;
+    transition: 0.3s;
+    text-align: center;
 }
 
-/* Card Backgrounds */
-.card-bg {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 0;
-    transition: opacity 0.3s;
+.neon-btn.large {
+    padding: 1.5rem 3rem;
+    font-size: 1.5rem;
 }
 
-.bg-storm { background: radial-gradient(circle at 50% 30%, #ff4444, #220022); opacity: 0.7; }
-.bg-locked { background: radial-gradient(circle at 50% 50%, #444, #111); filter: grayscale(100%); opacity: 0.5; }
-
-.card-content { position: relative; z-index: 2; text-align: center; }
-.card h3 { font-family: var(--font-display); margin-bottom: 10px; }
-
-.card--locked { opacity: 0.6; pointer-events: none; }
-.card--locked .overlay-text {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: var(--font-display);
-    letter-spacing: 2px;
-    font-weight: bold;
+.neon-btn:hover {
+    background: var(--neon-teal);
+    color: var(--obsidian);
+    box-shadow: 0 0 15px var(--neon-teal);
 }
 
-.card-footer {
-    position: absolute; bottom: 10px; width: 100%; 
-    text-align: center; font-size: 0.6rem; color: #555;
-    left: 0;
+/* --- Store Section --- */
+.store-section {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 1.5rem;
+    border-left: 4px solid var(--gold-leaf);
 }
 
-/* =========================================
-   7. DASHBOARD VIEW: BOTTOM PANEL
-   ========================================= */
-.bottom-section {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap; /* Stacks on mobile */
-}
-
-.panel {
-    flex: 1;
-    min-width: 300px;
-    border-top: 2px solid var(--neon-cyan);
-    padding-top: 15px;
-}
-
-.panel h3 {
-    color: var(--neon-cyan);
-    font-family: var(--font-display);
-    margin-bottom: 15px;
-}
-
-/* Supply Buttons Grid */
-.supply-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-}
-
-/* Leaderboard List */
-.lb-container {
-    background: var(--bg-panel);
-    padding: 15px;
-    border: 1px solid #333;
-}
-
-.leaderboard-list { list-style: none; }
-.lb-item { margin-bottom: 8px; font-size: 0.9rem; display: flex; justify-content: space-between; }
-.lb-header { color: #888; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 5px; font-size: 0.8rem; letter-spacing: 1px; }
-.lb-header--secondary { margin-top: 15px; }
-
-/* =========================================
-   8. GAME VIEW (CANVAS)
-   ========================================= */
-#game-view {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    animation: fadeIn 0.5s ease-in;
-}
-
-.game-ui-header {
+.product-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--neon-pink);
-    padding-bottom: 10px;
+    padding: 1rem 0;
+    border-bottom: 1px solid #333;
 }
 
-.game-controls-hint {
-    font-size: 0.8rem;
-    color: #888;
-    animation: blink 2s infinite;
-}
-
-#game-canvas {
-    background: radial-gradient(circle at center, #1a1a2e, #000);
-    border: 1px solid var(--neon-cyan);
-    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1);
-    width: 100%;
-    height: 450px; /* Fixed height for viewport */
-    image-rendering: pixelated; /* Crisp pixel art look */
-    cursor: crosshair;
-}
-
-/* =========================================
-   9. BUTTON STYLES
-   ========================================= */
-.btn {
-    font-family: var(--font-display);
-    cursor: pointer;
+.buy-btn {
+    background: var(--blood-red);
+    color: white;
     border: none;
-    transition: 0.2s;
-    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    font-family: var(--terminal-font);
+    cursor: pointer;
 }
 
-/* Launch Button */
-.btn--launch {
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: 2px solid var(--neon-pink);
-    color: white;
-    text-shadow: 0 0 5px var(--neon-pink);
-    box-shadow: 0 0 5px var(--neon-pink);
-}
-
-.btn--launch:hover, .btn--launch:focus {
-    background: var(--neon-pink);
-    color: black;
-    text-shadow: none;
-    outline: none;
-}
-
-/* Supply Buttons */
-.btn--supply {
-    background: transparent;
-    padding: 12px;
-    color: white;
-    font-family: var(--font-mono);
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    border: 1px solid #444; /* Fallback */
-}
-
-.btn--blue { border-color: var(--neon-cyan); color: var(--neon-cyan); }
-.btn--green { border-color: var(--neon-green); color: var(--neon-green); }
-.btn--gold { border-color: var(--neon-gold); color: var(--neon-gold); }
-.btn--pink { border-color: var(--neon-pink); color: var(--neon-pink); }
-
-.btn--supply:hover, .btn--supply:focus {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateX(5px);
-    outline: none;
-}
-
-/* Small / Exit Button */
-.btn--small {
-    padding: 5px 15px;
-    font-size: 0.8rem;
-    background: rgba(255, 0, 0, 0.1);
-    border: 1px solid #ff4444;
-    color: #ff4444;
-}
-
-.btn--small:hover {
-    background: #ff4444;
-    color: black;
-}
-
-/* =========================================
-   10. ANIMATIONS & OVERLAYS
-   ========================================= */
-@keyframes blink { 
-    50% { opacity: 0.3; } 
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* CRT Scanlines */
-.crt-overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(
-        rgba(18, 16, 16, 0) 50%, 
-        rgba(0, 0, 0, 0.25) 50%
-    );
-    background-size: 100% 4px;
-    pointer-events: none;
-    z-index: 100;
-    opacity: 0.6;
-}
-
-/* =========================================
-   11. TOAST NOTIFICATIONS
-   ========================================= */
-.toast-container {
+/* --- Terminal Footer --- */
+.system-footer {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    bottom: 0;
+    width: 100%;
+    background: rgba(10, 10, 12, 0.95);
+    padding: 1rem 2rem;
+    font-family: monospace;
+    color: #0f0;
+    font-size: 0.8rem;
+    border-top: 1px solid #222;
 }
 
-.toast {
-    background: rgba(0, 0, 0, 0.95);
-    border-left: 4px solid var(--neon-cyan);
-    color: white;
-    padding: 15px 20px;
-    min-width: 250px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    font-family: var(--font-mono);
-    animation: slideIn 0.3s ease-out forwards;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+/* --- Glitch Effect Animation --- */
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
 }
 
-.toast--success { border-color: var(--neon-green); }
-.toast--warn { border-color: var(--neon-gold); }
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes fadeOut {
-    to { opacity: 0; transform: translateX(20px); }
-}
-
-/* =========================================
-   12. RESPONSIVE DESIGN
-   ========================================= */
-@media (max-width: 768px) {
-    .ui-container {
-        padding: 10px;
-        border-width: 2px;
-    }
-
-    .ui-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .neural-interface {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .card { height: 200px; }
-    
-    #game-canvas { height: 300px; }
+.glitch-text:hover {
+    animation: glitch 0.3s infinite;
 }

@@ -1,21 +1,31 @@
 {
-  "name": "neon-pulse",
+  "name": "neural-link-hub",
   "version": "1.0.0",
-  "description": "Cyberpunk Arcade & Microtransactions Platform",
+  "description": "Aztec-Neonpunk Gaming Portal with Stripe & Neon DB",
   "main": "index.html",
   "scripts": {
-    "start": "netlify dev",
-    "build": "node scripts/build.mjs",
-    "init-db": "node scripts/init_db_run.js"
+    "dev": "netlify dev",
+    "build": "echo 'Building Aztec Terminal...'"
   },
+  "keywords": [
+    "neonpunk",
+    "aztec",
+    "stripe",
+    "netlify-functions",
+    "neon-db"
+  ],
+  "author": "Nagual Hacker",
+  "license": "MIT",
   "dependencies": {
-    "@netlify/neon": "^0.1.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.16.3",
-    "stripe": "^14.14.0"
+    "stripe": "^14.0.0",
+    "@neondatabase/serverless": "^0.9.0",
+    "pg": "^8.11.0",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
-    "netlify-cli": "^17.10.1"
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

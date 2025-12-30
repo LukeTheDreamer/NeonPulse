@@ -1,8 +1,36 @@
+# NEURAL LINK HUB - Netlify Configuration
+
 [build]
-  publish = "."
+  # Directory where your serverless functions are located
+  functions = "netlify/functions"
+  # Since this is a vanilla/React-standalone project, 
+  # no build command is needed if you are deploying the raw files.
+  command = "echo 'Initializing Aztec-Neonpunk Terminal...'"
+  publish = "/"
 
 [functions]
+  # Ensure Node.js environment for Stripe and Neon DB
   node_bundler = "esbuild"
+  external_node_modules = ["pg", "stripe"]
 
-[identity]
-  enable = true
+[[redirects]]
+  # Redirect any 404s back to the hub to keep users in the simulation
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Set UTF-8 to ensure special characters in your Aztec theme render correctly
+    Content-Type = "text/html; charset=UTF-8"
+    # Security Headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    # Allow Stripe and Google Fonts
+    Content-Security-Policy = "default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com;"
+
+[dev]
+  # Settings for 'netlify dev' local testing
+  port = 8888
+  publish = "."
