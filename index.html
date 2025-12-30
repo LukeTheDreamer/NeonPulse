@@ -3,485 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON PULSE - Neural Link</title>
+    <meta name="description" content="Neon Pulse - Cyberpunk Arcade Interface and Leaderboards">
+    <meta name="theme-color" content="#050510">
+    
+    <title>NEON PULSE | Command Interface</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-    <style>
-        /* --- CSS VARIABLES & RESET --- */
-        :root {
-            --neon-pink: #ff00ff;
-            --neon-cyan: #00ffff;
-            --neon-green: #39ff14;
-            --neon-gold: #ffd700;
-            --bg-dark: #050510;
-            --bg-panel: rgba(10, 10, 20, 0.8);
-            --font-display: 'Orbitron', sans-serif;
-            --font-mono: 'Share Tech Mono', monospace;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            background-image: 
-                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 0, 255, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            color: white;
-            font-family: var(--font-mono);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* Prevent scroll for the UI feel */
-        }
-
-        /* --- MAIN FRAME & BORDER --- */
-        .ui-container {
-            width: 95%;
-            max-width: 1200px;
-            height: 90vh;
-            border: 4px solid var(--neon-cyan);
-            box-shadow: 
-                0 0 10px var(--neon-cyan),
-                inset 0 0 20px var(--neon-cyan);
-            position: relative;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            background: rgba(0,0,0,0.8);
-            /* Corner decorations (simulated with pseudo elements) */
-        }
-
-        /* Decorative Corners */
-        .ui-container::before, .ui-container::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0; left: 0;
-            pointer-events: none;
-            border: 4px solid var(--neon-pink);
-            clip-path: polygon(
-                0% 10%, 10% 10%, 10% 0%, 
-                90% 0%, 90% 10%, 100% 10%, 
-                100% 90%, 90% 90%, 90% 100%, 
-                10% 100%, 10% 90%, 0% 90%
-            );
-            z-index: -1;
-            filter: drop-shadow(0 0 5px var(--neon-pink));
-        }
-
-        /* --- HEADER --- */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--neon-cyan);
-            padding-bottom: 20px;
-            position: relative;
-        }
-
-        .logo {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .text-pink { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
-        .text-cyan { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
-        .text-green { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
-
-        .neural-interface {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .hex-badge {
-            width: 60px;
-            height: 60px;
-            background: #111;
-            border: 2px solid var(--neon-gold);
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 10px var(--neon-gold);
-        }
-        
-        .hex-icon { font-size: 24px; }
-
-        .user-stats {
-            font-size: 0.9rem;
-            line-height: 1.4;
-            color: #ccc;
-        }
-
-        .supporter-tag {
-            background: linear-gradient(90deg, #440044, transparent);
-            border: 1px solid var(--neon-pink);
-            padding: 2px 8px;
-            color: var(--neon-pink);
-            font-size: 0.7rem;
-            margin-top: 5px;
-            display: inline-block;
-        }
-
-        /* --- ARCADE GRID --- */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--neon-cyan);
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            color: var(--neon-cyan);
-            font-family: var(--font-display);
-        }
-
-        .neural-link-status {
-            font-size: 0.8rem;
-            animation: pulse 2s infinite;
-        }
-
-        .arcade-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr 1fr;
-            gap: 15px;
-            height: 45%;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: #0a0a12;
-            border: 1px solid #333;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 10px;
-            transition: all 0.3s;
-        }
-
-        /* Active Card Styling */
-        .card.active {
-            border: 2px solid var(--neon-pink);
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
-            background: linear-gradient(to bottom, transparent, rgba(255, 0, 255, 0.1));
-        }
-
-        .card-bg {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.7;
-        }
-        
-        /* Simulated images with gradients */
-        .bg-storm { background: radial-gradient(circle at 50% 30%, #ff4444, #220022); }
-        .bg-locked { background: radial-gradient(circle at 50% 50%, #444, #111); filter: grayscale(100%); }
-
-        .card-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-        }
-
-        .card h3 {
-            font-family: var(--font-display);
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .btn-launch {
-            width: 100%;
-            padding: 10px;
-            background: transparent;
-            border: 2px solid var(--neon-pink);
-            color: white;
-            font-family: var(--font-display);
-            cursor: pointer;
-            text-shadow: 0 0 5px var(--neon-pink);
-            box-shadow: 0 0 5px var(--neon-pink);
-            transition: 0.2s;
-        }
-
-        .btn-launch:hover {
-            background: var(--neon-pink);
-            color: black;
-            text-shadow: none;
-        }
-
-        .card.locked {
-            opacity: 0.6;
-            border: 1px solid #444;
-        }
-        
-        .card.locked .overlay-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: var(--font-display);
-            letter-spacing: 2px;
-            font-size: 1.2rem;
-            white-space: nowrap;
-        }
-
-        /* --- BOTTOM SECTION (SPLIT) --- */
-        .bottom-section {
-            display: flex;
-            gap: 20px;
-            flex: 1;
-        }
-
-        .supply-depot, .leaderboards {
-            flex: 1;
-            border-top: 2px solid var(--neon-cyan);
-            padding-top: 10px;
-        }
-        
-        .supply-depot h3, .leaderboards h3 {
-            color: var(--neon-cyan);
-            font-family: var(--font-display);
-            margin-bottom: 15px;
-        }
-
-        /* Button Grid */
-        .supply-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .supply-btn {
-            background: transparent;
-            padding: 10px;
-            color: white;
-            font-family: var(--font-mono);
-            cursor: pointer;
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.2s;
-        }
-
-        .btn-blue { border: 1px solid var(--neon-cyan); color: var(--neon-cyan); }
-        .btn-green { border: 1px solid var(--neon-green); color: var(--neon-green); }
-        .btn-gold { border: 1px solid var(--neon-gold); color: var(--neon-gold); }
-        .btn-pink { border: 1px solid var(--neon-pink); color: var(--neon-pink); }
-
-        .supply-btn:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
-
-        /* Leaderboard List */
-        .leaderboard-list {
-            list-style: none;
-        }
-
-        .leaderboard-list li {
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .lb-label { color: var(--neon-green); font-weight: bold; }
-        .lb-val { float: right; }
-
-        /* --- ANIMATIONS --- */
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        /* CRT Scanline Effect Overlay */
-        .crt-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 2px 100%;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
+    <div id="toast-container" class="toast-container"></div>
+
     <div class="ui-container">
-        <header>
+        <header class="ui-header">
             <div class="logo">
                 <span class="text-pink">NEON</span> <span class="text-cyan">PULSE</span>
             </div>
             
             <div class="neural-interface">
                 <div class="user-info">
-                    <div style="font-size: 0.8rem; color: #888;">NEURAL LINK INTERFACE</div>
+                    <div class="label-tiny">NEURAL LINK INTERFACE</div>
                     <div class="user-stats">
                         PILOT: <span class="text-green">CYBER_DRAGON_77</span><br>
-                        Credits: <span id="credit-display">9,000</span><br>
-                        STATUS: LOGOUT
+                        Credits: <span id="credit-display" class="credit-value">9,000</span><br>
+                        STATUS: <span class="status-indicator">LOGOUT</span>
                     </div>
-                    <div class="supporter-tag">👑 LVL 3 LEGEND SUPPORTER</div>
+                    <div class="supporter-tag">
+                        <span role="img" aria-label="crown">👑</span> LVL 3 LEGEND SUPPORTER
+                    </div>
                 </div>
-                <div class="hex-badge">
+                <div class="hex-badge" aria-hidden="true">
                     <span class="hex-icon">🐲</span>
                 </div>
             </div>
         </header>
 
-        <section class="section-container">
-            <div class="section-header">
-                <span>ARCADE GRID</span>
-                <span class="neural-link-status text-cyan">Connect Neural Link [ONLINE]</span>
-            </div>
+        <main>
+            <section class="game-section" aria-labelledby="arcade-title">
+                <div class="section-header">
+                    <h2 id="arcade-title">ARCADE GRID</h2>
+                    <span class="neural-link-status text-cyan">
+                        <span class="blink-dot">●</span> Connect Neural Link [ONLINE]
+                    </span>
+                </div>
 
-            <div class="arcade-grid">
-                <div class="card active">
-                    <div class="card-bg bg-storm"></div>
-                    <div class="card-content">
-                        <h3 class="text-pink">NEON STORM</h3>
-                        <button class="btn-launch" onclick="launchSim()">LAUNCH SIMULATION</button>
+                <div class="arcade-grid">
+                    <article class="card card--active">
+                        <div class="card-bg bg-storm"></div>
+                        <div class="card-content">
+                            <h3 class="text-pink">NEON STORM</h3>
+                            <button id="btn-launch" class="btn btn--launch" type="button">LAUNCH SIMULATION</button>
+                        </div>
+                    </article>
+
+                    <article class="card card--locked">
+                        <div class="card-bg bg-locked"></div>
+                        <div class="overlay-text">UNAVAILABLE</div>
+                        <div class="card-footer">OMNIKRON ASSAULT</div>
+                    </article>
+                    <article class="card card--locked">
+                        <div class="card-bg bg-locked"></div>
+                        <div class="overlay-text">UNAVAILABLE</div>
+                        <div class="card-footer">SHARD BLADES II</div>
+                    </article>
+                    <article class="card card--locked">
+                        <div class="card-bg bg-locked"></div>
+                        <div class="overlay-text">UNAVAILABLE</div>
+                        <div class="card-footer">DOWNSHIFTER V</div>
+                    </article>
+                </div>
+            </section>
+
+            <div class="bottom-section">
+                <section class="panel supply-depot" aria-labelledby="supply-title">
+                    <h3 id="supply-title">// SUPPLY DEPOT //</h3>
+                    <div class="supply-grid">
+                        <button class="btn btn--supply btn--blue" data-action="add-credits" data-amount="5000">
+                            <span aria-hidden="true">💎</span> 5,000 CREDITS ($5)
+                        </button>
+                        <button class="btn btn--supply btn--green" data-action="buy-item" data-item="Tier 1 Initiate">
+                            <span aria-hidden="true">🛡️</span> TIER 1 INITIATE ($30)
+                        </button>
+                        <button class="btn btn--supply btn--blue" data-action="add-credits" data-amount="10000">
+                            <span aria-hidden="true">💎</span> 10,000 CREDITS ($10)
+                        </button>
+                        <button class="btn btn--supply btn--green" data-action="buy-item" data-item="Tier 2 Veteran">
+                            <span aria-hidden="true">🛡️</span> TIER 2 VETERAN ($50)
+                        </button>
+                        <button class="btn btn--supply btn--gold" data-action="donate" data-type="gold">
+                            <span aria-hidden="true">👑</span> PURE DONATION
+                        </button>
+                        <button class="btn btn--supply btn--pink" data-action="donate" data-type="heart">
+                            <span aria-hidden="true">❤️</span> PURE DONATION
+                        </button>
                     </div>
-                </div>
+                </section>
 
-                <div class="card locked">
-                    <div class="card-bg bg-locked"></div>
-                    <div class="overlay-text">UNAVAILABLE</div>
-                    <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 0.6rem; color: #555;">OMNIKRON ASSAULT</div>
-                </div>
-                <div class="card locked">
-                    <div class="card-bg bg-locked"></div>
-                    <div class="overlay-text">UNAVAILABLE</div>
-                    <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 0.6rem; color: #555;">SHARD BLADES II</div>
-                </div>
-                <div class="card locked">
-                    <div class="card-bg bg-locked"></div>
-                    <div class="overlay-text">UNAVAILABLE</div>
-                    <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 0.6rem; color: #555;">DOWNSHIFTER V</div>
-                </div>
+                <aside class="panel leaderboards" aria-labelledby="lb-title">
+                    <h3 id="lb-title">GLOBAL LEADERBOARDS</h3>
+                    
+                    <div class="lb-container">
+                        <ul class="leaderboard-list">
+                            <li class="lb-header">TOP PILOTS</li>
+                            <li class="lb-item">
+                                <span class="text-cyan">1. ECHO TRACER:</span> 
+                                <span class="lb-val">120,500</span>
+                            </li>
+                            <li class="lb-item">
+                                <span class="text-cyan">2. FLUX_WAVE:</span> 
+                                <span class="lb-val">118,200</span>
+                            </li>
+                            <li class="lb-item">
+                                <span class="text-cyan">3. NULL_PTR:</span> 
+                                <span class="lb-val">99,450</span>
+                            </li>
+                            
+                            <li class="lb-header lb-header--secondary">TOP SUPPORTERS</li>
+                            <li class="lb-item">
+                                <span class="text-gold">1. LEGEND KING</span> 
+                            </li>
+                        </ul>
+                    </div>
+                </aside>
             </div>
-        </section>
+        </main>
 
-        <div class="bottom-section">
-            <section class="supply-depot">
-                <h3>// SUPPLY DEPOT //</h3>
-                <div class="supply-grid">
-                    <button class="supply-btn btn-blue" onclick="addCredits(5000)">
-                        <span>💎</span> 5,000 CREDITS ($5)
-                    </button>
-                    <button class="supply-btn btn-green">
-                        <span>🛡️</span> TIER 1 INITIATE ($30)
-                    </button>
-                    <button class="supply-btn btn-blue" onclick="addCredits(10000)">
-                        <span>💎</span> 10,000 CREDITS ($10)
-                    </button>
-                    <button class="supply-btn btn-green">
-                        <span>🛡️</span> TIER 2 VETERAN ($50)
-                    </button>
-                    <button class="supply-btn btn-gold">
-                        <span>👑</span> PURE DONATION
-                    </button>
-                    <button class="supply-btn btn-pink">
-                        <span>❤️</span> PURE DONATION
-                    </button>
-                </div>
-            </section>
-
-            <section class="leaderboards">
-                <div style="display:flex; justify-content: space-between;">
-                    <h3>GLOBAL LEADERBOARDS</h3>
-                </div>
-                
-                <div style="background: rgba(0,0,0,0.5); padding: 15px; border: 1px solid #333;">
-                    <ul class="leaderboard-list">
-                        <li style="color: #888; border-bottom: 1px solid #333; margin-bottom: 10px; padding-bottom: 5px;">TOP PILOTS</li>
-                        <li>
-                            <span class="text-cyan">1. ECHO TRACER:</span> 
-                            <span class="lb-val">120,500</span>
-                        </li>
-                        <li>
-                            <span class="text-cyan">2. FLUX_WAVE:</span> 
-                            <span class="lb-val">118,200</span>
-                        </li>
-                        <li>
-                            <span class="text-cyan">3. NULL_PTR:</span> 
-                            <span class="lb-val">99,450</span>
-                        </li>
-                        
-                        <li style="color: #888; border-bottom: 1px solid #333; margin: 15px 0 10px 0; padding-bottom: 5px;">TOP SUPPORTERS</li>
-                        <li>
-                            <span class="text-gold">1. LEGEND KING</span> 
-                        </li>
-                    </ul>
-                </div>
-            </section>
-        </div>
-
-        <div class="crt-overlay"></div>
+        <div class="crt-overlay" aria-hidden="true"></div>
     </div>
 
-    <script>
-        // State
-        let credits = 9000;
-        const creditDisplay = document.getElementById('credit-display');
-
-        // Functions
-        function launchSim() {
-            // Visual feedback
-            const btn = document.querySelector('.btn-launch');
-            const originalText = btn.innerText;
-            
-            btn.innerText = "INITIALIZING...";
-            btn.style.backgroundColor = "white";
-            btn.style.color = "black";
-
-            setTimeout(() => {
-                alert("SYSTEM MESSAGE: NEURAL LINK ESTABLISHED. LOADING 'NEON STORM'...");
-                // Reset button
-                btn.innerText = originalText;
-                btn.style.backgroundColor = "";
-                btn.style.color = "";
-            }, 500);
-        }
-
-        function addCredits(amount) {
-            credits += amount;
-            // Simple animation effect for numbers
-            animateValue(creditDisplay, credits - amount, credits, 500);
-            
-            // Console log for realism
-            console.log(`[SYSTEM] Transaction Complete. Added ${amount} credits.`);
-        }
-
-        // Helper to animate number counting up
-        function animateValue(obj, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        // Init message
-        console.log("%c NEON PULSE UI LOADED ", "background: #00ffff; color: #000; font-weight: bold;");
-    </script>
+    <script src="js/app.js"></script>
 </body>
 </html>
